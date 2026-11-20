@@ -1,5 +1,5 @@
 # Intent 0001: Invoice processing for a multi-entity finance team
-Author: Sandeep Khokher (product owner). Drafted with: Claude. Status: draft.
+Author: Sandeep Khokher (product owner). Drafted with: Claude. Status: accepted (PR #1).
 Source: conversation · Date: 2026-11-20
 
 ## Problem
