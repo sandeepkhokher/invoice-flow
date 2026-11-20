@@ -1,0 +1,22 @@
+.PHONY: setup run test lint fmt eval verify-audit runner runner-loop
+
+setup:        ## install dependencies
+	uv sync
+
+run:          ## start the app on http://127.0.0.1:8000
+	uv run uvicorn app.main:create_app --factory --reload
+
+test:         ## run the test suite
+	uv run pytest
+
+lint:         ## lint and format check (CI runs this)
+	uv run ruff check . && uv run ruff format --check .
+
+fmt:          ## auto-format and fix lint
+	uv run ruff format . && uv run ruff check --fix .
+
+eval:         ## extraction eval (slice S10)
+	@echo "not implemented yet: slice S10" && exit 1
+
+verify-audit: ## verify the audit hash chain (slice S1)
+	@echo "not implemented yet: slice S1" && exit 1

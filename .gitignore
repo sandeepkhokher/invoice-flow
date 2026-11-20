@@ -12,3 +12,4 @@ data/
 htmlcov/
 .claude/settings.local.json
 .DS_Store
+.worktrees/
