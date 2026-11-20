@@ -1,0 +1,42 @@
+[project]
+name = "invoice-flow"
+version = "0.1.0"
+requires-python = ">=3.13"
+dependencies = [
+    "alembic>=1.20.1",
+    "anthropic>=2.11.0",
+    "argon2-cffi>=25.1.0",
+    "cryptography>=50.0.2",
+    "fastapi>=0.165.0",
+    "jinja2>=3.1.6",
+    "pillow>=13.0.0",
+    "pydantic>=2",
+    "pydantic-settings>=2.16.3",
+    "pypdf>=7.1.1",
+    "python-multipart>=0.0.34",
+    "sqlalchemy>=2",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=9.2.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.17.6",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "S", "SIM"]
+ignore = ["S101"]  # assert is fine in tests
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
