@@ -1,6 +1,6 @@
 # Spec 0001: Invoice processing for a multi-entity finance team
 Status: draft (awaiting product-owner review). Date: 2026-11-20.
-Produced by: `/spec intent/0001-invoice-processing` (`.claude/commands/spec.md`), Claude Opus 5.5.
+Produced by: Claude Opus 5.5, written in-session following the `/spec` instructions (`.claude/commands/spec.md`); the command was not run separately.
 Inputs: `intent.md` at commit `e00fad8`; skills at commit `9443168`
 (`gst-invoice-rules`, `data-protection`, `approval-and-audit`, `ux-standards`).
 
