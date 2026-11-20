@@ -53,6 +53,32 @@ Then at each gate, one line moves things forward:
 | 5 Deploy | Reviews PRs against `REVIEW.md`, spec and plan; fixes `@claude` comments; sets up gate hooks and CI | Approve PRs; authorise production releases |
 | 6 Maintain | A script watches a metric; when it drifts, Claude diagnoses and writes a new `intent.md` | Triage: fix now, schedule, or dismiss |
 
+## Where the policy skills come from (Stage 2)
+
+Nothing in the intent instructs Claude to write skills. The playbook requires policies to
+exist as skills before the spec is written, so the spec is constrained by them. The intent
+only supplies the topics. Claude crosses the playbook's categories with what the intent raises:
+
+| Category | Look in the intent for | invoice-flow example |
+|---|---|---|
+| Compliance / domain rules | laws, regulations, industry rules, calculations | `gst-invoice-rules` |
+| Security / data protection | personal or financial data, tenants, external APIs, file input | `data-protection` |
+| Internal controls | approvals, audit trail, who may do what | `approval-and-audit` |
+| UX / brand | always one, from the org's design or brand guide | `ux-standards` |
+
+The order is: the intent is accepted → policy skills are written and committed → the spec is
+written against them, and its header cites the skills commit → the product owner reviews the
+skills and the spec together in the same PR.
+
+The rules inside each skill should come from the policy's real owner and source document.
+When there is none, Claude drafts the rules from your answers, the relevant law or standards,
+and its own judgment, and must mark them `PROPOSED` with the source of each rule until you
+approve them. A skill is advisory, so any rule that must always hold also needs a test or a
+hook (Stages 3–5).
+
+In invoice-flow, the skills were drafted by Claude without a source document and committed
+before that rule existed. Treat them as proposals until they are reviewed in PR #3.
+
 ## Two things to know
 
 - **Some things happen once per project:** the repo, the `intent/` folder, the policy
