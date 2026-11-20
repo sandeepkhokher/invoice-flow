@@ -1,4 +1,4 @@
-.PHONY: setup run test lint fmt eval verify-audit runner runner-loop
+.PHONY: setup run test lint fmt eval verify-audit runner runner-dry runner-loop
 
 setup:        ## install dependencies
 	uv sync
@@ -20,3 +20,12 @@ eval:         ## extraction eval (slice S10)
 
 verify-audit: ## verify the audit hash chain (slice S1)
 	@echo "not implemented yet: slice S1" && exit 1
+
+runner:       ## one pass of the ticket runner over issues labelled agent:ready
+	uv run python scripts/ticket_runner.py
+
+runner-dry:   ## show which issues the runner would pick up
+	uv run python scripts/ticket_runner.py --dry-run
+
+runner-loop:  ## poll for agent:ready issues every 2 minutes
+	uv run python scripts/ticket_runner.py --loop
