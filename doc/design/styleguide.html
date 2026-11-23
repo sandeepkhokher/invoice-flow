@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>invoice-flow style guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;700&family=Atkinson+Hyperlegible+Next:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="invoice-flow.css">
+<style>
+  /* Style-guide page only */
+  .sg-section { margin: var(--s7) 0; }
+  .sg-section > h2 { border-bottom: 2px solid var(--ink); padding-bottom: var(--s2); }
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: var(--s3); }
+  .swatch { background: var(--sheet); border: 1px solid var(--rule); font-size: var(--text-sm); }
+  .swatch div { height: 56px; }
+  .swatch p { margin: 0; padding: var(--s2); }
+  .row { display: flex; gap: var(--s3); flex-wrap: wrap; align-items: center; }
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5); }
+  @media (max-width: 900px) { .two { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <a class="brand" href="#">invoice-flow</a>
+    <label class="visually-hidden" for="entity">Entity</label>
+    <select id="entity"><option>Acme Manufacturing Pvt Ltd</option><option>Acme Exports LLP</option><option>All my entities</option></select>
+    <a href="#">Notifications (3)</a>
+    <a href="#">R. Mehta</a>
+  </header>
+  <nav class="sidenav" aria-label="Main">
+    <ul>
+      <li><a href="#work" aria-current="page">My work</a></li>
+      <li><a href="#list">Invoices</a></li>
+      <li><a href="#forms">Upload</a></li>
+      <li><a href="#approve">Approvals</a></li>
+      <li><a href="#list">Export</a></li>
+      <li><a href="#list">Vendors</a></li>
+      <li class="group">Admin</li>
+      <li><a href="#forms">Entities</a></li>
+      <li><a href="#forms">Users</a></li>
+      <li><a href="#forms">Approval tiers</a></li>
+    </ul>
+  </nav>
+  <main>
+    <div class="page-head">
+      <h1>Style guide</h1>
+      <span class="muted">Proposed visual design for screens.md. Every component, with real-looking content.</span>
+    </div>
+
+    <section class="sg-section" id="palette">
+      <h2>Palette</h2>
+      <div class="swatches">
+        <div class="swatch"><div style="background:var(--paper)"></div><p><strong>Ledger paper</strong><br>#F7F8F5 · page</p></div>
+        <div class="swatch"><div style="background:var(--ink)"></div><p><strong>Ink</strong><br>#1C2433 · text</p></div>
+        <div class="swatch"><div style="background:var(--carbon)"></div><p><strong>Carbon blue</strong><br>#2340A0 · actions, focus</p></div>
+        <div class="swatch"><div style="background:var(--bahi)"></div><p><strong>Bahi red</strong><br>#A51C30 · margin, blocked</p></div>
+        <div class="swatch"><div style="background:var(--turmeric)"></div><p><strong>Turmeric</strong><br>#8A5A00 · warnings</p></div>
+        <div class="swatch"><div style="background:var(--cleared)"></div><p><strong>Cleared green</strong><br>#2E6A3E · approved, paid</p></div>
+        <div class="swatch"><div style="background:var(--rule)"></div><p><strong>Ledger rule</strong><br>#C9D3C5 · table lines</p></div>
+      </div>
+    </section>
+
+    <section class="sg-section" id="stamps">
+      <h2>Invoice states as stamps</h2>
+      <p>The one memorable element. Each state is an ink stamp; colour is backed by the word, never alone.</p>
+      <div class="row">
+        <span class="stamp" data-state="received">Received</span>
+        <span class="stamp" data-state="needs_review">Needs review</span>
+        <span class="stamp" data-state="extraction_failed">Extraction failed</span>
+        <span class="stamp" data-state="in_approval">In approval · tier 1 of 2</span>
+        <span class="stamp" data-state="approved">Approved</span>
+        <span class="stamp" data-state="exported">Exported</span>
+        <span class="stamp" data-state="paid">Paid</span>
+        <span class="stamp" data-state="rejected">Rejected</span>
+        <span class="stamp" data-state="discarded">Discarded</span>
+      </div>
+      <p style="margin-top:var(--s5)">Large, on an invoice page header, stamped in once when the state changes:</p>
+      <span class="stamp stamp-lg just-stamped" data-state="approved">Approved 23-Nov-2026</span>
+    </section>
+
+    <section class="sg-section" id="work">
+      <h2>My work (SC-2)</h2>
+      <nav class="worklist" aria-label="My work">
+        <a href="#"><span>Invoices to review<br><span class="age">Oldest waiting 3 days</span></span><span class="count">12</span><span class="btn">Review next</span></a>
+        <a href="#"><span>Invoices to approve<br><span class="age">Oldest waiting 1 day</span></span><span class="count">4</span><span class="btn">Open</span></a>
+        <a href="#"><span>Extraction failed<br><span class="age">Retry, or enter the fields by hand</span></span><span class="count">1</span><span class="btn">Open</span></a>
+      </nav>
+    </section>
+
+    <section class="sg-section" id="flags">
+      <h2>Flags</h2>
+      <div class="flag flag-block" role="alert"><span class="icon" aria-hidden="true">✕</span><div><strong>Blocked: wrong tax head</strong>CGST and SGST are charged, but the supplier is in Maharashtra (27) and the place of supply is Karnataka (29), so IGST is due. Ask the supplier for a corrected invoice, or correct the extracted heads if they were misread.</div></div>
+      <div class="flag flag-warn"><span class="icon" aria-hidden="true">!</span><div><strong>Warning: possible duplicate</strong>INV-2026-0041 from the same supplier, dated 12-Nov-2026, has a total within 1%. <a href="#">Compare the two invoices</a></div></div>
+      <div class="flag flag-info"><span class="icon" aria-hidden="true">i</span><div><strong>Information</strong>This supplier is not in the vendor master yet. It will be added when this invoice is approved.</div></div>
+    </section>
+
+    <section class="sg-section" id="list">
+      <h2>Ledger table (SC-3)</h2>
+      <div class="table-wrap"><table class="ledger">
+        <thead><tr><th>Supplier</th><th>Invoice no.</th><th>Date</th><th class="amount">Total</th><th>State</th><th>Flags</th></tr></thead>
+        <tbody>
+          <tr><td>Shree Ganesh Traders<br><span class="gstin muted">27 AAPFU0939F 1Z V</span></td><td class="invno">INV-2026-0042</td><td>12-Nov-2026</td><td class="amount">₹1,18,000.00</td><td><span class="stamp" data-state="needs_review">Needs review</span></td><td>1 blocked</td></tr>
+          <tr><td>Kaveri Cement Distributors<br><span class="gstin muted">29 AAGCB7383J 1Z 4</span></td><td class="invno">KCD/24-25/1187</td><td>10-Nov-2026</td><td class="amount">₹4,72,500.00</td><td><span class="stamp" data-state="in_approval">In approval · 1 of 2</span></td><td>None</td></tr>
+          <tr><td>Northwind IT Services</td><td class="invno">NW-00981</td><td>02-Nov-2026</td><td class="amount">₹59,000.00</td><td><span class="stamp" data-state="paid">Paid</span></td><td>None</td></tr>
+        </tbody>
+        <tfoot><tr><td colspan="3">3 invoices</td><td class="amount">₹6,49,500.00</td><td colspan="2"></td></tr></tfoot>
+      </table></div>
+    </section>
+
+    <section class="sg-section" id="review">
+      <h2>Review (SC-11)</h2>
+      <div class="page-head">
+        <h3 style="margin:0">INV-2026-0042 · Shree Ganesh Traders</h3>
+        <span class="stamp" data-state="needs_review">Needs review</span>
+      </div>
+      <div class="review">
+        <div class="docview" aria-label="Invoice document, page 1 of 2">
+          <div class="page">
+            <strong style="color:var(--ink)">SHREE GANESH TRADERS</strong><br>GSTIN 27AAPFU0939F1ZV · Pune<br><br>
+            TAX INVOICE &nbsp; No. INV-2026-0042 &nbsp; Date <mark>12/11/2026</mark><br><br>
+            Bill to: Acme Manufacturing Pvt Ltd, Bengaluru<br>GSTIN 29AAGCB7383J1Z4<br><br>
+            Steel brackets (HSN 7326) 400 × ₹250.00 ... ₹1,00,000.00<br>
+            CGST 9% ₹9,000.00 &nbsp; SGST 9% ₹9,000.00<br><br>
+            <strong style="color:var(--ink)">TOTAL ₹1,18,000.00</strong>
+          </div>
+        </div>
+        <form>
+          <div class="fieldset">
+            <h2>Check these first</h2>
+            <div class="field" data-confidence="low"><label for="d">Invoice date <span class="conf">Low confidence · page 1</span></label><input id="d" value="12-Nov-2026"><span class="help">Read as 12/11/2026. Confirm day and month.</span></div>
+            <div class="field" data-invalid><label for="h">Tax heads</label><input id="h" value="CGST 9% + SGST 9%"><span class="error">Inter-state supply: should be IGST 18%.</span></div>
+          </div>
+          <div class="fieldset">
+            <h2>Supplier</h2>
+            <div class="field"><label for="g">GSTIN</label><input id="g" class="gstin" value="27AAPFU0939F1ZV"><span class="help">Valid · Maharashtra (27)</span></div>
+            <div class="field"><label for="n">Invoice number</label><input id="n" class="invno" value="INV-2026-0042"></div>
+          </div>
+        </form>
+      </div>
+      <div class="actionbar">
+        <span class="shortcuts"><kbd>Tab</kbd> next field · <kbd>Ctrl</kbd>+<kbd>Enter</kbd> submit · <kbd>?</kbd> all shortcuts</span>
+        <button type="button" class="btn btn-danger">Discard…</button>
+        <button type="button" class="btn btn-primary" aria-disabled="true" title="Resolve the blocked flag first">Submit for approval</button>
+      </div>
+    </section>
+
+    <section class="sg-section" id="approve">
+      <h2>Approve on a phone (SC-21)</h2>
+      <div class="approve">
+        <span class="stamp" data-state="in_approval">Tier 1 of 2</span>
+        <p style="margin:var(--s3) 0 0"><strong>Kaveri Cement Distributors</strong><br><span class="invno">KCD/24-25/1187</span> · 10-Nov-2026</p>
+        <p class="big">₹4,72,500.00</p>
+        <p class="muted">Taxable ₹4,00,423.73 · IGST 18% · Acme Manufacturing Pvt Ltd</p>
+        <div class="flag flag-warn"><span class="icon" aria-hidden="true">!</span><div><strong>Bank details differ from last invoice</strong><label><input type="checkbox"> I have checked this with the supplier</label></div></div>
+        <a href="#">View the document</a>
+        <p class="muted" style="margin-top:var(--s3)">Reviewed by S. Iyer</p>
+        <div class="buttons"><button type="button" class="btn btn-danger">Reject…</button><button type="button" class="btn btn-primary">Approve</button></div>
+      </div>
+    </section>
+
+    <section class="sg-section" id="forms">
+      <h2>Forms, buttons and empty states</h2>
+      <div class="two">
+        <div class="fieldset">
+          <h2>Add GST registration</h2>
+          <div class="field"><label for="gg">GSTIN</label><input id="gg" class="gstin" value="29AAGCB7383J1Z5"><span class="error">The check character should be 4. Check the last character.</span></div>
+          <div class="field"><label for="st">State</label><select id="st"><option>Karnataka (29)</option></select></div>
+          <div class="row"><button type="button" class="btn btn-primary">Save registration</button><button type="button" class="btn">Cancel</button></div>
+        </div>
+        <div class="empty">
+          <h3>No invoices yet</h3>
+          <p>Upload invoices, or connect an email inbox so they arrive on their own.</p>
+          <a class="btn btn-primary" href="#">Upload invoices</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

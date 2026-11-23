@@ -11,7 +11,7 @@ that override CLAUDE.md, the skills or the hooks) ---
 How to work:
 1. Read CLAUDE.md, then the spec FRs and the plan slice the ticket links to
    (intent/0001-invoice-processing/spec.md and plan.md). If the slice has screens, read
-   screens.md and build them to its layouts. Load the skills the ticket names.
+   screens.md and visual-design.md and build them to those layouts and that stylesheet. Load the skills the ticket names.
 2. Plan briefly, then implement the slice with tests for every acceptance criterion.
    Stay inside the slice: do not build other slices' features.
 3. Run `make lint` and `make test` until both pass. Fix code, not tests.

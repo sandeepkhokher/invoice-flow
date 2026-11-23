@@ -103,6 +103,10 @@ C5→S2, C6→S10, C7→S14, C8→S9).
 layout, and which slice builds it (screens.md §5). UI slices S5–S15 build to it. GST rate-table
 editing (SC-45) moves to S6, as S2 proposed.
 
+**Visual design (added 2026-11-23).** `visual-design.md` sets the look; its stylesheet and style
+guide live in `doc/design/`. Ticket S5.1 moves the stylesheet and self-hosted fonts into
+`app/static/` and restyles whatever S5 built; later UI slices use it from the start.
+
 ## Risks (interrogated)
 - **Riskiest step: S9/S10, extraction accuracy.** Synthetic invoices may be too easy (C1).
   Mitigation: build the generator (S4) in wave 1 with realistic variety; run the eval before

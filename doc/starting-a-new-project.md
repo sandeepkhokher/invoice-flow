@@ -47,11 +47,28 @@ Then at each gate, one line moves things forward:
 | Stage | Claude does | You do |
 |---|---|---|
 | 1 Plan | Asks analyst questions: users, problem, scope, constraints, success measures. Writes `intent.md` | Answer; correct the draft; merge |
-| 2 Design | Writes policy skills (security, compliance, UX, domain rules), then `spec.md` with numbered requirements and flagged concerns | Provide real policies if you have them; decide each concern; merge |
+| 2 Design | Writes policy skills (security, compliance, UX, domain rules), then `spec.md` with numbered requirements and flagged concerns. For a product with a UI, also `screens.md` (screen map) and `visual-design.md` with a stylesheet and a style guide page | Provide real policies and any brand guide; decide each concern; look at the style guide; merge |
 | 3 Build | Writes `CLAUDE.md`; plans in plan mode; commits `plan.md`; creates one ticket per slice; builds | Challenge the plan (what could break, riskiest step, alternatives); accept it |
 | 4 Test | Runs tests on every change; builds evals for any AI feature | Check the evidence pasted in PRs |
 | 5 Deploy | Reviews PRs against `REVIEW.md`, spec and plan; fixes `@claude` comments; sets up gate hooks and CI | Approve PRs; authorise production releases |
 | 6 Maintain | A script watches a metric; when it drifts, Claude diagnoses and writes a new `intent.md` | Triage: fix now, schedule, or dismiss |
+
+## UI design is part of Stage 2 (our addition)
+
+The playbook does not mention screens or visual design; it has a UX/brand policy skill and
+the spec. On invoice-flow that was not enough: the spec listed requirements but no screens,
+and nothing said how the app should look, so every UI ticket would have invented its own.
+For any product with a user interface, Stage 2 therefore ends with two more artifacts,
+each approved by PR before the first UI ticket runs:
+
+- **`screens.md`**: which screens exist, who sees each, what is on it, its one main action,
+  which ticket builds it, and wireframes of the key screens.
+- **`visual-design.md`**: the look (typefaces, colours with measured contrast, spacing,
+  components, one signature element), delivered as a real stylesheet and a style guide page
+  you open in a browser, with screenshots. You approve what you can see.
+
+If you already have a brand or design system, give it to Claude first; otherwise Claude
+proposes one, marked "PO to confirm". UI tickets then cite screen IDs and attach screenshots.
 
 ## Where the policy skills come from (Stage 2)
 
