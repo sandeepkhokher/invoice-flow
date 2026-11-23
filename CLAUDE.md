@@ -44,6 +44,8 @@ For a bug fix, write the failing test first.
 - `app/api/`: routes. `deps.py` holds the global sign-in + CSRF guard (`PUBLIC_PATHS`),
   `menu.py` the role menu, `templating.py` the renderer and `gstin`/`date` filters.
 - `app/tax/`: TaxRegime, IndiaGST, GSTIN checks.
+- `app/static/`: the one stylesheet (`css/invoice-flow.css`), self-hosted fonts and HTMX, served
+  at `/static` without sign-in; public assets only.
 - `app/templates/`: Jinja pages (`base.html` is the layout shell). Planned: `app/extraction/`,
   `app/intake/`, `app/approval/`, `app/export/`.
 - Migrations: Alembic (`alembic/`); one migration per DB slice.

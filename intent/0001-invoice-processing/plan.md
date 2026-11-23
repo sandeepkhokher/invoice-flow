@@ -282,3 +282,39 @@ S5 (auth, users, entities, GST registrations, grants, entity scoping, issue #10)
   (or `INVOICE_FLOW_DEMO_PASSWORD`) and prints them.
 - **Not built:** there is no command to create the first admin on a production database;
   `make seed-demo` covers development. A follow-up ticket should add one.
+
+### S5.1 departures
+S5.1 (visual design applied to the shell and S5 screens, issue #36) differs as follows:
+- **`/static` is served without sign-in.** The login page needs the stylesheet, fonts and HTMX
+  before anyone signs in, so `create_app` mounts `app/static/` (Starlette `StaticFiles`, no
+  directory listings). This is the one exception to "every route except `/login` and `/health`
+  requires sign-in" (data-protection §3); the S5 test that forbade mounts now allows exactly this
+  mount, and `tests/test_visual_design.py` limits the directory to `.css`, `.woff2`, `.js` and `.txt`
+  files and checks that path traversal gets 404. **Security lead to confirm**, and to add the
+  exception to data-protection §3 if accepted.
+- **Stylesheet additions.** The S5 screens needed components the design did not have yet:
+  skip link, entity switcher, account menu, nested side menu and menu button, `.panel` page
+  sections, `.form-actions`, `.narrow`, role-grant groups (`.grants`, `.checks`), `.notice`
+  (info, ok, error; icon + word), user `.status`, inline `.confirm`, the sign-in page, My work
+  rows without counts (`.worklist .task`), the empty live region, and htmx's indicator rules.
+  They are at the end of `invoice-flow.css` and in the style guide. The remaining raw hex and
+  rgba values outside `:root` became tokens (`--carbon-deep`, `--carbon-wash`, `--zebra`,
+  `--desk`, `--page-shadow`). Two fixes to the approved CSS: below 768 px the menu row no longer
+  stretches to fill the screen (`grid-template-rows`), and the entity switcher wraps instead of
+  overflowing.
+- **Menu below 768 px.** screens.md §1.1 says the menu collapses into a menu button;
+  visual-design.md says it becomes a scrolling row. Both: the menu button opens a scrolling row.
+  Its toggle moved from an inline `onclick` to `app/static/js/shell.js`.
+- **One primary action per screen.** The page-head "Add entity", "Add registration" and
+  "Invite user" buttons duplicated the forms' submit buttons; they are now plain links to the
+  form ("Add an entity below"), so each screen has one `.btn-primary`. My work has none until
+  S15 adds "open the oldest task".
+- **Fonts and HTMX are copied from upstream:** the `fonts/webfonts/` WOFF2 files (400, 700) and
+  `OFL.txt` of googlefonts/atkinson-hyperlegible-next and -next-mono, and htmx 2.0.4 from
+  unpkg, checked against its published SRI hash, which `base.html` also carries. htmx's own
+  injected indicator `<style>` is switched off (`includeIndicatorStyles: false`).
+- **Formatting helpers** for later slices: `money` filter (₹ and Indian grouping for INR; other
+  currencies by ISO code; refuses `float`), `stamp(state)` and `gstin(value)` macros in
+  `_macros.html`. S5 screens show no money or invoice states yet.
+- **The style guide** links `../../app/static/css/invoice-flow.css` and no longer calls Google
+  Fonts. Screenshots are in `doc/design/screenshots/s5.1/`.

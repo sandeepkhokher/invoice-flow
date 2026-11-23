@@ -1,6 +1,12 @@
 /* invoice-flow visual design: tokens + components.
-   Source of truth: intent/0001-invoice-processing/visual-design.md.
-   No build step. Fonts are self-hosted in the app (OFL); the style guide loads them from Google Fonts. */
+   Source of truth: intent/0001-invoice-processing/visual-design.md. Style guide: doc/design/styleguide.html.
+   No build step. Fonts are self-hosted in ../fonts/ (SIL Open Font License); no third-party requests.
+   Raw hex values live only in :root; everything else uses tokens. */
+
+@font-face { font-family: "Atkinson Hyperlegible Next"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/AtkinsonHyperlegibleNext-Regular.woff2") format("woff2"); }
+@font-face { font-family: "Atkinson Hyperlegible Next"; font-style: normal; font-weight: 700; font-display: swap; src: url("../fonts/AtkinsonHyperlegibleNext-Bold.woff2") format("woff2"); }
+@font-face { font-family: "Atkinson Hyperlegible Mono"; font-style: normal; font-weight: 400; font-display: swap; src: url("../fonts/AtkinsonHyperlegibleMono-Regular.woff2") format("woff2"); }
+@font-face { font-family: "Atkinson Hyperlegible Mono"; font-style: normal; font-weight: 700; font-display: swap; src: url("../fonts/AtkinsonHyperlegibleMono-Bold.woff2") format("woff2"); }
 
 :root {
   /* Palette */
@@ -13,12 +19,17 @@
   --control: #7a8777;      /* input and button borders (3:1 against white, WCAG 1.4.11) */
   --carbon: #2340a0;       /* carbon-copy blue: primary actions, links, focus */
   --carbon-ink: #ffffff;
+  --carbon-deep: #1a3285;  /* primary button hover */
+  --carbon-wash: rgba(35, 64, 160, 0.16); /* source highlight in the document viewer */
   --bahi: #a51c30;         /* bahi-khata red: margin rule, blocked */
   --bahi-wash: #fbeaec;
   --turmeric: #8a5a00;     /* warnings (text) */
   --turmeric-wash: #fbf1d9;
   --cleared: #2e6a3e;      /* approved, paid, ok */
   --cleared-wash: #e6f2e8;
+  --zebra: #fbfcfa;        /* even ledger rows */
+  --desk: #e9ece6;         /* behind the document page in the viewer */
+  --page-shadow: 0 1px 2px rgba(28, 36, 51, 0.18);
 
   /* Type */
   --font-ui: "Atkinson Hyperlegible Next", "Atkinson Hyperlegible", system-ui, sans-serif;
@@ -74,7 +85,7 @@ main { padding: var(--s5) var(--s6); min-width: 0; }
 .page-head .actions { margin-left: auto; display: flex; gap: var(--s2); }
 
 @media (max-width: 767px) {
-  .shell { grid-template-columns: minmax(0, 1fr); }
+  .shell { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto 1fr; } /* menu row hugs its content */
   .topbar { flex-wrap: wrap; padding: var(--s2) var(--s4); }
   .topbar select { max-width: 100%; }
   .sidenav { border-right: 0; border-bottom: 2px solid var(--bahi); padding: var(--s2) var(--s4); }
@@ -91,7 +102,7 @@ main { padding: var(--s5) var(--s6); min-width: 0; }
 }
 .btn:hover { border-color: var(--ink-soft); }
 .btn-primary { background: var(--carbon); border-color: var(--carbon); color: var(--carbon-ink); }
-.btn-primary:hover { background: #1a3285; }
+.btn-primary:hover { background: var(--carbon-deep); }
 .btn-danger { color: var(--bahi); border-color: var(--bahi); }
 .btn[disabled], .btn[aria-disabled="true"] { opacity: 0.5; cursor: not-allowed; }
 
@@ -102,10 +113,10 @@ main { padding: var(--s5) var(--s6); min-width: 0; }
   font: inherit; padding: var(--s2) var(--s3); min-height: 40px; color: var(--ink);
   background: var(--sheet); border: 1px solid var(--control); border-radius: var(--radius);
 }
-.field input:focus { border-color: var(--carbon); }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--carbon); }
 .field .help { font-size: var(--text-sm); color: var(--ink-soft); }
 .field .error { font-size: var(--text-sm); color: var(--bahi); font-weight: 700; }
-.field[data-invalid] input { border-color: var(--bahi); }
+.field[data-invalid] input, .field[data-invalid] textarea { border-color: var(--bahi); border-width: 2px; }
 .field[data-confidence="low"] input { border: 2px dashed var(--turmeric); background: var(--turmeric-wash); }
 .conf { font-size: var(--text-sm); color: var(--turmeric); font-weight: 700; }
 
@@ -114,7 +125,7 @@ main { padding: var(--s5) var(--s6); min-width: 0; }
 .ledger { width: 100%; border-collapse: collapse; background: var(--sheet); font-size: var(--text-sm); border: 1px solid var(--rule); }
 .ledger th, .ledger td { padding: var(--s2) var(--s3); border-bottom: 1px solid var(--rule); text-align: left; vertical-align: top; }
 .ledger thead th { font-weight: 700; color: var(--ink-soft); border-bottom: 2px solid var(--ink); background: var(--sheet); position: sticky; top: 0; }
-.ledger tbody tr:nth-child(even) { background: #fbfcfa; }
+.ledger tbody tr:nth-child(even) { background: var(--zebra); }
 .ledger tbody tr:hover { background: var(--rule-soft); }
 .ledger tfoot td { font-weight: 700; border-top: 2px solid var(--ink); border-bottom: 3px double var(--ink); }
 .ledger .num, .ledger .amount { text-align: right; }
@@ -157,9 +168,9 @@ main { padding: var(--s5) var(--s6); min-width: 0; }
 
 /* Review: document beside fields */
 .review { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(360px, 1fr); gap: var(--s5); align-items: start; }
-.docview { background: #e9ece6; border: 1px solid var(--rule); min-height: 560px; padding: var(--s4); position: sticky; top: var(--s4); }
-.docview .page { background: var(--sheet); box-shadow: 0 1px 2px rgba(28, 36, 51, 0.18); aspect-ratio: 1 / 1.414; padding: var(--s5); font-size: 11px; color: var(--ink-soft); }
-.docview mark { background: rgba(35, 64, 160, 0.16); outline: 2px solid var(--carbon); color: inherit; }
+.docview { background: var(--desk); border: 1px solid var(--rule); min-height: 560px; padding: var(--s4); position: sticky; top: var(--s4); }
+.docview .page { background: var(--sheet); box-shadow: var(--page-shadow); aspect-ratio: 1 / 1.414; padding: var(--s5); font-size: 11px; color: var(--ink-soft); }
+.docview mark { background: var(--carbon-wash); outline: 2px solid var(--carbon); color: inherit; }
 .fieldset { background: var(--sheet); border: 1px solid var(--rule); padding: var(--s4) var(--s5); margin-bottom: var(--s4); }
 .fieldset > h2 { font-size: var(--text-md); padding-bottom: var(--s2); border-bottom: 1px solid var(--rule); }
 .actionbar { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; gap: var(--s3); justify-content: flex-end; align-items: center; padding: var(--s3) var(--s4); background: var(--sheet); border-top: 2px solid var(--ink); margin-top: var(--s5); }
@@ -178,5 +189,88 @@ kbd { font-family: var(--font-mono); font-size: 0.85em; padding: 0 4px; border: 
 .empty p { margin: 0 auto var(--s4); }
 
 /* Status messages (ARIA live region target) */
-.toast { position: fixed; right: var(--s5); bottom: var(--s5); background: var(--ink); color: var(--sheet); padding: var(--s3) var(--s4); border-radius: var(--radius); }
+.toast { z-index: 10; max-width: 360px; position: fixed; right: var(--s5); bottom: var(--s5); background: var(--ink); color: var(--sheet); padding: var(--s3) var(--s4); border-radius: var(--radius); }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- Added in S5.1 (ticket #36) for the S5 screens; each is shown in the style guide ---- */
+
+/* Shell details: skip link, entity switcher, account menu, nested menu, menu button */
+.skip-link { position: absolute; left: var(--s2); top: -100px; z-index: 20; background: var(--sheet); padding: var(--s2) var(--s3); border: 1px solid var(--control); }
+.skip-link:focus { top: var(--s2); }
+.switcher { display: flex; align-items: center; gap: var(--s2); }
+.switcher label { font-size: var(--text-sm); color: var(--ink-soft); }
+.topbar-entity { color: var(--ink-soft); font-size: var(--text-sm); }
+.usermenu { position: relative; }
+.usermenu > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; min-height: 40px; padding: 0 var(--s3); border: 1px solid var(--control); border-radius: var(--radius); }
+.usermenu > summary::-webkit-details-marker { display: none; }
+.usermenu-panel { position: absolute; right: 0; top: calc(100% + var(--s1)); z-index: 5; min-width: 200px; background: var(--sheet); border: 1px solid var(--rule); border-top: 2px solid var(--ink); padding: var(--s2); }
+.usermenu-panel a, .usermenu-panel .linklike { display: block; width: 100%; text-align: left; padding: var(--s2); }
+.linklike { font: inherit; color: var(--carbon); background: none; border: 0; padding: 0; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
+.sidenav ul ul a { padding-left: var(--s5); font-size: var(--text-sm); }
+.menu-button { display: none; }
+@media (max-width: 767px) {
+  .switcher { flex: 1 1 100%; order: 1; min-width: 0; }
+  .switcher select { flex: 1; min-width: 0; }
+  .sidenav li { display: flex; gap: var(--s1); }
+  .sidenav a { white-space: nowrap; }
+  .sidenav ul ul a { padding-left: var(--s3); }
+  .menu-button { display: inline-flex; margin-bottom: var(--s2); }
+  .menu-button[aria-expanded="false"] + ul { display: none; }
+}
+
+/* Sections of a page: a ruled sheet with a heading (same look as .fieldset) */
+.panel { background: var(--sheet); border: 1px solid var(--rule); padding: var(--s4) var(--s5); margin-bottom: var(--s5); }
+.panel > h2 { font-size: var(--text-lg); padding-bottom: var(--s2); border-bottom: 1px solid var(--rule); }
+.narrow { max-width: 36rem; }
+.form-actions { display: flex; flex-wrap: wrap; gap: var(--s3); align-items: center; margin-top: var(--s4); }
+.field input[type="number"] { max-width: 8rem; }
+.field textarea { min-height: 5rem; resize: vertical; }
+.table-wrap { margin-bottom: var(--s5); }
+.panel > .table-wrap:last-child { margin-bottom: 0; }
+.ledger caption { caption-side: top; text-align: left; padding: 0 0 var(--s2); color: var(--ink-soft); }
+.ledger .field { margin-bottom: var(--s2); }
+
+/* Role grants: one ruled group per entity, checkboxes in a row */
+.grants { border: 1px solid var(--rule); padding: var(--s3) var(--s4); margin: 0 0 var(--s4); }
+.grants legend { font-weight: 700; padding: 0 var(--s2); }
+.checks { display: flex; flex-wrap: wrap; gap: var(--s1) var(--s5); margin-bottom: var(--s3); }
+.checks label { display: inline-flex; align-items: center; gap: var(--s2); min-height: 40px; }
+.checks input { width: 18px; height: 18px; accent-color: var(--carbon); }
+
+/* Notices: page-level messages. Icon + word + colour, like flags */
+.notice { display: grid; grid-template-columns: auto 1fr; gap: var(--s1) var(--s3); padding: var(--s3) var(--s4); border-left: 4px solid var(--carbon); background: var(--sheet); border-radius: 0 var(--radius) var(--radius) 0; margin-bottom: var(--s4); max-width: 72ch; }
+.notice .icon { font-weight: 700; color: var(--carbon); }
+.notice p { margin: 0 0 var(--s2); }
+.notice p:last-child { margin-bottom: 0; }
+.notice-ok { border-color: var(--cleared); background: var(--cleared-wash); }
+.notice-ok .icon { color: var(--cleared); }
+.notice-error { border-color: var(--bahi); background: var(--bahi-wash); }
+.notice-error .icon { color: var(--bahi); }
+.notice p.mono { font-size: var(--text-lg); font-weight: 700; letter-spacing: 0.04em; }
+
+/* Account status of a user (not an invoice state: those are stamps) */
+.status { font-size: var(--text-sm); font-weight: 700; color: var(--cleared); white-space: nowrap; }
+.status-off { color: var(--bahi); }
+
+/* Inline confirm for destructive actions (screens.md §6): no browser dialogs */
+.confirm > summary { cursor: pointer; color: var(--bahi); font-weight: 700; min-height: 40px; display: inline-flex; align-items: center; }
+.confirm[open] > form { margin-top: var(--s2); padding: var(--s3); border-left: 4px solid var(--bahi); background: var(--bahi-wash); }
+
+/* Sign-in page: no shell */
+.signin { max-width: 26rem; margin: 10vh auto var(--s7); padding: 0 var(--s4); }
+.signin .brand { display: block; font-size: var(--text-xl); margin-bottom: var(--s4); }
+.signin .panel { border-top: 2px solid var(--ink); }
+.signin .btn-primary { width: 100%; justify-content: center; }
+
+/* My work rows with no link yet (S15 adds counts and the "open the oldest" link) */
+.worklist .task { display: grid; grid-template-columns: 1fr auto; gap: var(--s4); align-items: baseline; padding: var(--s4); border-bottom: 1px solid var(--rule); }
+.worklist .task:last-child { border-bottom: 0; }
+.worklist .task h2 { font-size: var(--text-md); margin: 0 0 var(--s1); }
+.worklist .task p { margin: 0; }
+
+/* Status message region: hidden while empty */
+.toast:empty { display: none; }
+
+/* HTMX request indicator (htmx's own inline style is switched off in base.html) */
+.htmx-indicator { opacity: 0; }
+.htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; transition: opacity 200ms ease-in; }

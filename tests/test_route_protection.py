@@ -1,14 +1,18 @@
 """Every route except /login and /health requires sign-in (data-protection §3, ticket #10).
 
 The test walks the app's real route table, so a route added later is covered automatically.
+The one exception is the `/static` mount of public assets (stylesheet, fonts, HTMX), which the
+login page needs before sign-in (ticket #36); `test_visual_design` pins what may live there.
 """
 
 import re
 
 from fastapi.routing import APIRoute, iter_route_contexts
+from fastapi.staticfiles import StaticFiles
 from starlette.routing import Mount
 
 from app.api.deps import PUBLIC_PATHS
+from app.main import STATIC_DIR, STATIC_PATH
 
 PUBLIC = {("/login", "GET"), ("/login", "POST"), ("/health", "GET")}
 
@@ -17,9 +21,20 @@ def _routes(app):
     """(path, method) for every route, with included routers' prefixes applied."""
     for ctx in iter_route_contexts(app.routes):
         route = ctx.original_route
+        if _is_static_mount(route):
+            continue
         assert isinstance(route, APIRoute), f"unexpected non-API route {route!r}"
         for method in sorted(route.methods - {"HEAD"}):
             yield ctx.path, method
+
+
+def _is_static_mount(route) -> bool:
+    return (
+        isinstance(route, Mount)
+        and route.path == STATIC_PATH
+        and isinstance(route.app, StaticFiles)
+        and route.app.directory == STATIC_DIR
+    )
 
 
 def _concrete(path: str) -> str:
@@ -35,8 +50,11 @@ def test_public_routes_are_exactly_login_and_health(app):
     assert public == PUBLIC
 
 
-def test_no_mounts_or_api_docs(app, client):
-    assert not any(isinstance(c.original_route, Mount) for c in iter_route_contexts(app.routes))
+def test_the_only_mount_is_the_static_assets_directory_and_no_api_docs(app, client):
+    mounts = [c.original_route for c in iter_route_contexts(app.routes)]
+    mounts = [r for r in mounts if isinstance(r, Mount)]
+    assert len(mounts) == 1 and _is_static_mount(mounts[0])
+    assert mounts[0].app.html is False  # no index pages or directory listings
     for path in ("/docs", "/redoc", "/openapi.json"):
         assert client.get(path, follow_redirects=False).status_code == 404
 

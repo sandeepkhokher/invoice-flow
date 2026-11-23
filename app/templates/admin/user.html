@@ -1,19 +1,19 @@
 {% extends "base.html" %}
-{% from "_macros.html" import csrf, grants_grid %}
+{% from "_macros.html" import csrf, grants_grid, notice %}
 {% block title %}{{ target.name }}{% endblock %}
 {% block content %}
 <p><a href="/admin/users">‹ Users</a></p>
 <div class="page-head">
   <h1>{{ target.name }}</h1>
-  {% if target.is_active %}<span class="badge">Active</span>{% else %}<span class="badge off">✖ Deactivated</span>{% endif %}
+  {% if target.is_active %}<span class="status">✓ Active</span>{% else %}<span class="status status-off">✕ Deactivated</span>{% endif %}
 </div>
 
 {% if temp_password %}
-<div class="notice ok" role="alert">
-  <p style="margin-top:0"><strong>User invited.</strong> Their temporary password is shown only now:</p>
-  <p class="mono" style="font-size:1.2em">{{ temp_password }}</p>
-  <p style="margin-bottom:0">Give it to {{ target.name }} privately; they change it under Account after signing in.</p>
-</div>
+{% call notice("ok", role="alert") %}
+  <p><strong>User invited.</strong> Their temporary password is shown only now:</p>
+  <p class="mono">{{ temp_password }}</p>
+  <p>Give it to {{ target.name }} privately; they change it under Account after signing in.</p>
+{% endcall %}
 {% endif %}
 
 <p><strong>Email:</strong> {{ target.email }}</p>
@@ -21,33 +21,33 @@
 <p class="muted">This person also has access to {{ other_entities }} other entit{{ "y" if other_entities == 1 else "ies" }} you do not administer.</p>
 {% endif %}
 
-<section class="card" aria-labelledby="grants-h">
-  <h2 id="grants-h" style="margin-top:0">Roles per entity</h2>
+<section class="panel" aria-labelledby="grants-h">
+  <h2 id="grants-h">Roles per entity</h2>
   <form method="post" action="/admin/users/{{ target.id }}/grants">
     {{ csrf(csrf_token) }}
     {{ grants_grid(grid, roles, permissions, max_tier, errors) }}
-    <div class="actions"><button type="submit" class="primary">Save grants</button></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Save grants</button></div>
   </form>
 </section>
 
-<section class="card" aria-labelledby="active-h">
-  <h2 id="active-h" style="margin-top:0">{{ "Deactivate" if target.is_active else "Reactivate" }}</h2>
-  {% if errors.get('active') %}<p class="field-error">{{ errors.get('active') }}</p>{% endif %}
+<section class="panel" aria-labelledby="active-h">
+  <h2 id="active-h">{{ "Deactivate" if target.is_active else "Reactivate" }}</h2>
+  {% if errors.get('active') %}<div class="field" data-invalid><span class="error">✕ {{ errors.get('active') }}</span></div>{% endif %}
   {% if target.is_active %}
-  <details>
+  <details class="confirm">
     <summary>Deactivate this user…</summary>
     <form method="post" action="/admin/users/{{ target.id }}/active">
       {{ csrf(csrf_token) }}
       <input type="hidden" name="active" value="0">
       <p>{{ target.name }} can no longer sign in, and their open sessions end now. Their history stays in the audit trail.</p>
-      <button type="submit" class="danger">Deactivate</button>
+      <button type="submit" class="btn btn-danger">Deactivate</button>
     </form>
   </details>
   {% else %}
   <form method="post" action="/admin/users/{{ target.id }}/active">
     {{ csrf(csrf_token) }}
     <input type="hidden" name="active" value="1">
-    <button type="submit">Reactivate</button>
+    <button type="submit" class="btn">Reactivate</button>
   </form>
   {% endif %}
 </section>

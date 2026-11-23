@@ -21,7 +21,7 @@ NEW_PASSWORD = "a brand new long password"
 
 
 def menu_labels(html: str) -> list[str]:
-    nav = re.search(r'<nav class="side".*?</nav>', html, re.S).group(0)
+    nav = re.search(r'<nav class="sidenav".*?</nav>', html, re.S).group(0)
     return re.findall(r"<a href=\"[^\"]+\"[^>]*>([^<]+)</a>", nav)
 
 
@@ -62,13 +62,16 @@ def test_shell_has_header_user_menu_and_live_region(app, world):
     assert 'aria-live="polite"' in page
     assert 'href="/account"' in page and 'action="/logout"' in page
     assert 'aria-label="Main menu"' in page and 'aria-controls="main-menu"' in page
-    assert "@media (max-width: 767px)" in page  # the menu collapses below 768 px
+    # The menu collapses below 768 px: the rule lives in the one stylesheet the shell links.
+    assert '<link rel="stylesheet" href="/static/css/invoice-flow.css">' in page
+    css = TestClient(app).get("/static/css/invoice-flow.css").text
+    assert "@media (max-width: 767px)" in css and ".menu-button" in css
     assert "Entity: Entity One Pvt Ltd" in page  # one entity: shown, no switcher
 
 
 def test_login_page_has_no_shell(client):
     page = client.get("/login").text
-    assert '<nav class="side"' not in page
+    assert '<nav class="sidenav"' not in page and 'class="shell"' not in page
 
 
 # --- SC-2 My work -------------------------------------------------------------------------
