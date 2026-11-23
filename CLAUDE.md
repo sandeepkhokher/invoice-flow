@@ -26,6 +26,9 @@ For a bug fix, write the failing test first.
 - `intent/0001-invoice-processing/plan.md`: slices S1–S15, dependencies, risks.
 - `intent/0001-invoice-processing/screens.md`: screen map (SC-n), roles per screen, layouts.
   Any ticket that adds a page builds the screens its slice lists there; cite SC IDs in PRs.
+- `intent/0001-invoice-processing/visual-design.md`: the look. Use the one stylesheet and its
+  classes and tokens (see `doc/design/styleguide.html`); no per-page styles or raw hex values.
+  UI PRs include screenshots.
 - If your implementation departs from plan.md, update plan.md in the same PR.
 
 ## Architecture
