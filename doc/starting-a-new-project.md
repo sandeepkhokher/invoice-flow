@@ -70,6 +70,23 @@ each approved by PR before the first UI ticket runs:
 If you already have a brand or design system, give it to Claude first; otherwise Claude
 proposes one, marked "PO to confirm". UI tickets then cite screen IDs and attach screenshots.
 
+## Build a walking skeleton first (our addition)
+
+invoice-flow first planned its build bottom-up: libraries in wave 1, login and admin next,
+the workflow last. After 5 of 15 slices, roughly 10,000 lines and 700 tests, the product owner
+could click only a login page and two admin pages. The rule we now follow:
+
+- The plan names a **walking skeleton**: the thinnest path through the whole main journey
+  (for invoice-flow: upload → extract → review → approve → export → paid), built first.
+- Depth is deferred with stubs and defaults: a demo mode for the AI call so it runs without an
+  API key, one default approval tier instead of the tier admin screen, no bank-detail columns
+  until vendors exist.
+- The plan states the skeleton's proof as a click-path in the running app.
+- At every gate Claude says what you can run or click now, and how many slices remain before
+  the journey works end to end.
+- Full independent reviews go to risky slices (security, money, model output, permissions);
+  the rest get CI, the runner's gate, the verifier and a quick read.
+
 ## Where the policy skills come from (Stage 2)
 
 Nothing in the intent instructs Claude to write skills. The playbook requires policies to
