@@ -78,7 +78,7 @@ mismatches against plan.md. Reports only; never fixes.
 | S4 | Synthetic invoice generator: about 60 PDFs/images with ground-truth JSON, 15+ seeded duplicates, intra and inter-state, scanned-style noise | §6 | A1 | no |
 | S5 | Auth, users, entities, GST registrations, role grants, entity-scoped repository, login page | FR-1, FR-3, DP §2–3 | S1 | yes |
 | S6 | Approval tier config + admin UI | FR-2 | S5 | yes |
-| S7 | Upload intake, file store, magic-byte checks, file hash, jobs table + worker | FR-10, FR-13, NFR-4 | S5 | yes |
+| S7 | Upload intake, file store, magic-byte checks, file hash, jobs worker (table built in S1) | FR-10, FR-13, NFR-4 | S5 | yes |
 | S8 | Vendor master, field encryption, bank masking and audited unmask, bank-change `block` | FR-55–56 | S5 | yes |
 | S9 | Claude extraction: schema, prompt, confidence merge, retries, touch-free path | FR-20–23 | S7, S2 | yes |
 | S10 | Extraction eval: `make eval` (accuracy, touch time, duplicate catch), with a private-set path option (C1) | §6, C1, C6 | S9, S4, S3 | no |
@@ -98,6 +98,10 @@ Each issue uses the ticket template: what, links (intent, FR IDs, plan §), acce
 criteria copied from the spec, applicable skills, and "Done = PR with `make test`/`make lint`
 output". Concern decisions are carried into the matching issues (C2→S11, C3→S8, C4→S12,
 C5→S2, C6→S10, C7→S14, C8→S9).
+
+**Screens (added 2026-11-23).** `screens.md` lists every screen (SC-1 to SC-50), who sees it, its
+layout, and which slice builds it (screens.md §5). UI slices S5–S15 build to it. GST rate-table
+editing (SC-45) moves to S6, as S2 proposed.
 
 ## Risks (interrogated)
 - **Riskiest step: S9/S10, extraction accuracy.** Synthetic invoices may be too easy (C1).
@@ -152,8 +156,46 @@ Phase A was built as PRs #21 (A1) and #22 (A2–A5). Differences from the plan a
 - **A5 needs the workspace trusted.** Headless sessions ignore `permissions.allow` in an untrusted
   folder. Run `claude` interactively in the repo once and accept the trust dialog.
 
-## Screen map added (2026-11-23)
-The spec had no single screen inventory, so each UI slice would have designed its own pages.
-`screens.md` now lists every screen (SC-1 to SC-50), who sees it, its layout, and which slice
-builds it (screens.md §5). UI slices S5–S15 build to it. GST rate-table editing (SC-45) moves
-to S6, as PR #24 proposed.
+### S1 departures
+S1 (domain core, issue #6) differs from the plan as follows:
+- **Jobs table moved into S1.** Issue #6 asks for the `jobs` table in S1's migration, so S1 creates
+  the table (`app/jobs.py`) and S7 builds only the worker that claims and runs jobs.
+- **No entities table yet.** `invoices.entity_id` and `audit_events.entity_id` are plain indexed
+  integers. S5 adds `entities` and the foreign key from `invoices`.
+- **S1 enforces roles; S12 adds separation of duties.** `transitions.py` checks the actor's role on
+  the invoice's entity (system-only steps refuse users, user steps refuse the system, admins cannot
+  approve) and requires a reason for discard, reject, reopen and extraction failure. The §2 rules
+  that need approval and edit history (uploader/editor cannot approve, one tier per person) are
+  added to the same functions in S12. The "no open `block` flags" check on submit (FR-37) comes
+  with flags in S11. Tier-by-tier progress inside `in_approval` is S12; it is not a state change.
+- **FR-23 touch-free edge.** The state machine includes `extracting -> ready_for_approval`
+  (`extraction_touch_free`), which FR-23 needs but the §5.2 diagram does not draw.
+- **Creation is audited.** `transitions.create_invoice` creates every invoice in `received` and
+  writes `invoice.received`; intake slices (S7, S14) call it.
+- **Append-only at two levels.** ORM listeners refuse updates and deletes of audit events, and the
+  migration adds SQLite triggers that refuse them for raw SQL too.
+- **`alembic/env.py`** imports `app.models`, accepts a caller-supplied URL (tests migrate temporary
+  databases with the real migrations), uses batch mode for SQLite, and keeps existing loggers.
+- **`make migrate`** was added (`alembic upgrade head`), since `make verify-audit` needs a migrated
+  database. `make verify-audit` exits 0 when the chain is intact, 1 when broken, 2 when it cannot
+  verify (database missing or not migrated).
+
+### S2 departures
+S2 (GST library, #7) was built in `app/tax/`. Differences from the plan above:
+- **Rule scope is §1-§7.** §8 (duplicates) is in S3's library, as the S3 row already says; FR-25's
+  "§1-§8" is met by S2 and S3 together.
+- **Rate table is read-only data in S2.** `app/tax/data/india_gst_rates.json` has effective-from
+  slab sets and `last_verified`. FR-27's "editable by admins and audited" needs the DB and the admin
+  UI, and no slice in the table owns it yet. Proposed: add it to S6 (admin config UI).
+- **C5 is still open.** The seed rates come from gst-invoice-rules §4 only, and `verified_by` says
+  they are UNVERIFIED. `last_verified` is `null` until the finance controller checks them against
+  current notifications and sets the date, before go-live.
+- **Interface details.** `IndiaGST(entity_gstins, rate_table=None)`, because the "buyer GSTIN is ours"
+  check needs the entity's registrations. `validate(invoice, *, vendor_e_invoice_mandated=False)`
+  takes the §7 vendor-master flag as a keyword, because the vendor master arrives in S8. The tax
+  layer's `Invoice` is its own frozen dataclass; S9 maps extraction output onto it.
+- **Not checked by S2.** The §2 reverse-charge indicator is "where applicable", and the invoice alone
+  cannot say when it applies, so it is not flagged. §7 "record the IRN": `Invoice.irn` carries it;
+  storing it belongs to S9.
+- **The state code of an invalid supplier GSTIN is still used** to decide intra- or inter-state, so
+  a wrong check character does not hide a wrong tax head. Both flags are `block`.
