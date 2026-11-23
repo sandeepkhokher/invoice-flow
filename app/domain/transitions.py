@@ -97,6 +97,9 @@ for _e in EDGES.values():
         LEGAL[(_src, _e.target)] = _e
 
 
+APPROVAL_DECISIONS = frozenset({"approve", "reject"})
+
+
 def _check_actor(edge: Edge, invoice: Invoice, actor: Actor) -> None:
     if actor.is_system:
         if not edge.system:
@@ -105,6 +108,10 @@ def _check_actor(edge: Edge, invoice: Invoice, actor: Actor) -> None:
     if not any(actor.has_role(invoice.entity_id, role) for role in edge.roles):
         needed = ", ".join(sorted(edge.roles)) or "the system"
         raise PermissionDenied(f"{edge.name} needs role {needed} on this invoice's entity")
+    if edge.name in APPROVAL_DECISIONS and actor.has_role(invoice.entity_id, Role.ADMIN):
+        # Spec §2 role table: admins cannot approve, even when they also hold APPROVER
+        # (product decision on PR #25). Admins configure; they do not decide.
+        raise PermissionDenied(f"admins cannot {edge.name} invoices on an entity they administer")
 
 
 def _apply(

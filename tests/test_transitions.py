@@ -20,6 +20,8 @@ OTHER_ENTITY = 2
 
 SYSTEM = Actor.system("worker")
 EVERYONE = Actor.user(99, {ENTITY: set(Role)})  # every role on the entity
+# Admins may not approve or reject (spec §2), so approval decisions use everyone-but-admin.
+DECIDER = Actor.user(98, {ENTITY: set(Role) - {Role.ADMIN}})
 
 # Spec §5.2, written out independently of the module so the test pins the design.
 SPEC_EDGES = {
@@ -60,7 +62,9 @@ PATH_TO[S.PAID] = [*PATH_TO[S.EXPORTED], "mark_paid"]
 
 
 def actor_for(edge: t.Edge) -> Actor:
-    return SYSTEM if edge.system else EVERYONE
+    if edge.system:
+        return SYSTEM
+    return DECIDER if edge.name in t.APPROVAL_DECISIONS else EVERYONE
 
 
 def new_invoice(session) -> Invoice:
@@ -229,6 +233,16 @@ def test_admin_cannot_approve(session):
     admin = Actor.user(7, {ENTITY: {Role.ADMIN, Role.CLERK, Role.ACCOUNTANT, Role.AUDITOR}})
     with pytest.raises(t.PermissionDenied):
         t.approve(session, inv, admin)
+
+
+@pytest.mark.parametrize("name", ["approve", "reject"])
+def test_admin_who_is_also_approver_cannot_decide(session, name):
+    inv = drive_to(session, S.IN_APPROVAL)
+    both = Actor.user(9, {ENTITY: {Role.ADMIN, Role.APPROVER}})
+    before = audit_count(session)
+    with pytest.raises(t.PermissionDenied):
+        getattr(t, name)(session, inv, both, reason="checked")
+    assert inv.state == S.IN_APPROVAL and audit_count(session) == before
 
 
 def test_auditor_is_read_only(session):
