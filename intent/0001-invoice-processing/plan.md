@@ -88,11 +88,32 @@ mismatches against plan.md. Reports only; never fixes.
 | S14 | Email (IMAP) and watched-folder intake, sender allow-list + quarantine (C7) | FR-11–12 | S7 | yes |
 | S15 | Queue dashboard, invoice history, audit search | FR-61, FR-65 | S12 | no |
 
-**Waves (parallelism):**
+**Waves (parallelism), as first planned:**
 1. S1, S2, S3, S4 (only S1 touches the DB, so all four run in parallel)
 2. S5, then S6, S7, S8 one after another (DB)
 3. S9, then S10 and S11
 4. S12, then S13, S14, S15
+
+**Re-sequenced 2026-11-23: walking skeleton first.** After wave 1 and S5 the product owner
+could click only login and two admin pages; the end-to-end workflow would have appeared only
+in wave 4. The bottom-up order was sound engineering but gave no visible product for most of
+the build. From here the order puts one thin path through the whole journey first:
+
+| Step | Slice | Thin version (what is deferred) |
+|---|---|---|
+| 1 | S5.1 (#36) | Apply the visual design (running) |
+| 2 | S7 (#12) | Upload + invoice list, as planned |
+| 3 | S9 (#14) | Extraction; without `ANTHROPIC_API_KEY` a demo extractor returns the ground truth for the synthetic invoices, so the flow works offline |
+| 4 | S11 (#16) | Review screen; bank-detail checks deferred to S8 |
+| 5 | S12 (#17) | Approval; with no tier configuration an entity gets one default tier of all its approvers (S6 adds configuration) |
+| 6 | S13 (#18) | Export and mark paid; bank-detail columns deferred to S8 |
+
+Proof of the skeleton: upload a synthetic invoice in the browser and take it to `paid`.
+Then, deepening: S6 tiers, S8 vendors and bank details, S5.2 auth hardening (#38),
+S10 eval, S14 email and folder intake, S15 dashboard, and the review follow-ups #29–#32.
+All skeleton steps touch the DB, so they run one after another. Review depth: CI, the
+runner's gate and the verifier on every PR; a full independent review for S9 (model output
+handling) and S12 (separation of duties); a quick read for the rest.
 
 Each issue uses the ticket template: what, links (intent, FR IDs, plan §), acceptance
 criteria copied from the spec, applicable skills, and "Done = PR with `make test`/`make lint`
