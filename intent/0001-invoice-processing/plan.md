@@ -137,3 +137,17 @@ C5→S2, C6→S10, C7→S14, C8→S9).
 - `intent/0001-invoice-processing/plan.md` (this plan, "Accepted by" filled in)
 - 15 GitHub Issues S1–S15 (labelled `stage:build`; wave-1 issues also `agent:ready` once A5 is merged)
 - Then the Phase A PRs, in order A1 → A5.
+
+## Departures from this plan (recorded as built)
+Phase A was built as PRs #21 (A1) and #22 (A2–A5). Differences from the plan above:
+- **A3 guardrails protect themselves.** The edit hook also blocks `.claude/hooks/**` and
+  `.claude/settings.json`; otherwise an agent could switch off its own guardrails. The Bash hook
+  also blocks shell writes (`>`, `tee`, `sed -i`, …) to every protected file. A live headless
+  test found that gap, and it was fixed in #22.
+- **A3 blocks more git and gh actions.** Force push, deleting remote branches, `gh pr merge` and
+  `gh repo delete` are blocked as well as pushing to main. Merging is the human gate.
+- **A3 allow-list.** It does not include `gh pr create`: the runner opens PRs, not the session.
+- **A5 builds only trusted tickets.** The repo is public and issue bodies become prompts, so the
+  runner builds only issues written by the repo owner.
+- **A5 needs the workspace trusted.** Headless sessions ignore `permissions.allow` in an untrusted
+  folder. Run `claude` interactively in the repo once and accept the trust dialog.
