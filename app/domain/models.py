@@ -8,9 +8,10 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import CheckConstraint, DateTime, Integer, String, Text
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
 
+import app.accounts.models  # noqa: F401  (registers `entities`, the target of the FK below)
 from app.db import Base
 from app.domain.money import Money, MoneyType
 from app.domain.states import InvoiceState
@@ -32,8 +33,7 @@ class Invoice(Base):
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    # FK to entities is added when the entities table exists (slice S5).
-    entity_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
+    entity_id: Mapped[int] = mapped_column(ForeignKey("entities.id"), nullable=False, index=True)
     _state: Mapped[str] = mapped_column(
         "state", String(32), nullable=False, index=True, default=InvoiceState.RECEIVED.value
     )

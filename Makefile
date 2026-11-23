@@ -1,4 +1,4 @@
-.PHONY: setup run migrate test lint fmt gen-invoices eval verify-audit runner runner-dry runner-loop
+.PHONY: setup run migrate seed-demo test lint fmt gen-invoices eval verify-audit runner runner-dry runner-loop
 
 setup:        ## install dependencies
 	uv sync
@@ -8,6 +8,9 @@ run:          ## start the app on http://127.0.0.1:8000
 
 migrate:      ## apply database migrations (Alembic) to the database under INVOICE_FLOW_DATA_DIR
 	uv run alembic upgrade head
+
+seed-demo:    ## demo entities, GST registrations and one user per role; prints the passwords
+	uv run python -m app.seed_demo
 
 test:         ## run the test suite
 	uv run pytest

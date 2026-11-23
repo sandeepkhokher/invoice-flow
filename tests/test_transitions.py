@@ -15,6 +15,8 @@ from app.domain.models import Invoice
 from app.domain.states import InvoiceState as S
 
 APP_DIR = Path(__file__).resolve().parent.parent / "app"
+# Invoices reference entities by foreign key since S5; ENTITY and OTHER_ENTITY exist as rows.
+pytestmark = pytest.mark.usefixtures("entity_rows")
 ENTITY = 1
 OTHER_ENTITY = 2
 

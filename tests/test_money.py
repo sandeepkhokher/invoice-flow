@@ -100,6 +100,7 @@ def test_money_module_has_no_floats():
             assert node.func.id != "float", f"float() call at line {node.lineno}"
 
 
+@pytest.mark.usefixtures("entity_rows")
 def test_money_columns_store_integer_paise(session):
     inv = t.create_invoice(
         session,
@@ -118,6 +119,7 @@ def test_money_columns_store_integer_paise(session):
     assert session.get(Invoice, inv.id).grand_total == Money.of("118000.50")
 
 
+@pytest.mark.usefixtures("entity_rows")
 def test_money_column_rejects_non_money(session):
     inv = t.create_invoice(session, Actor.system("intake"), entity_id=1, source="upload")
     inv.grand_total = 1.5  # type: ignore[assignment]
