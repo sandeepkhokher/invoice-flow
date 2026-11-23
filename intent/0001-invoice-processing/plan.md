@@ -152,6 +152,7 @@ Phase A was built as PRs #21 (A1) and #22 (A2–A5). Differences from the plan a
 - **A5 needs the workspace trusted.** Headless sessions ignore `permissions.allow` in an untrusted
   folder. Run `claude` interactively in the repo once and accept the trust dialog.
 
+### S1 departures
 S1 (domain core, issue #6) differs from the plan as follows:
 - **Jobs table moved into S1.** Issue #6 asks for the `jobs` table in S1's migration, so S1 creates
   the table (`app/jobs.py`) and S7 builds only the worker that claims and runs jobs.
@@ -174,3 +175,23 @@ S1 (domain core, issue #6) differs from the plan as follows:
 - **`make migrate`** was added (`alembic upgrade head`), since `make verify-audit` needs a migrated
   database. `make verify-audit` exits 0 when the chain is intact, 1 when broken, 2 when it cannot
   verify (database missing or not migrated).
+
+### S2 departures
+S2 (GST library, #7) was built in `app/tax/`. Differences from the plan above:
+- **Rule scope is §1-§7.** §8 (duplicates) is in S3's library, as the S3 row already says; FR-25's
+  "§1-§8" is met by S2 and S3 together.
+- **Rate table is read-only data in S2.** `app/tax/data/india_gst_rates.json` has effective-from
+  slab sets and `last_verified`. FR-27's "editable by admins and audited" needs the DB and the admin
+  UI, and no slice in the table owns it yet. Proposed: add it to S6 (admin config UI).
+- **C5 is still open.** The seed rates come from gst-invoice-rules §4 only, and `verified_by` says
+  they are UNVERIFIED. `last_verified` is `null` until the finance controller checks them against
+  current notifications and sets the date, before go-live.
+- **Interface details.** `IndiaGST(entity_gstins, rate_table=None)`, because the "buyer GSTIN is ours"
+  check needs the entity's registrations. `validate(invoice, *, vendor_e_invoice_mandated=False)`
+  takes the §7 vendor-master flag as a keyword, because the vendor master arrives in S8. The tax
+  layer's `Invoice` is its own frozen dataclass; S9 maps extraction output onto it.
+- **Not checked by S2.** The §2 reverse-charge indicator is "where applicable", and the invoice alone
+  cannot say when it applies, so it is not flagged. §7 "record the IRN": `Invoice.irn` carries it;
+  storing it belongs to S9.
+- **The state code of an invalid supplier GSTIN is still used** to decide intra- or inter-state, so
+  a wrong check character does not hide a wrong tax head. Both flags are `block`.
