@@ -151,3 +151,9 @@ Phase A was built as PRs #21 (A1) and #22 (A2–A5). Differences from the plan a
   runner builds only issues written by the repo owner.
 - **A5 needs the workspace trusted.** Headless sessions ignore `permissions.allow` in an untrusted
   folder. Run `claude` interactively in the repo once and accept the trust dialog.
+
+## Screen map added (2026-11-23)
+The spec had no single screen inventory, so each UI slice would have designed its own pages.
+`screens.md` now lists every screen (SC-1 to SC-50), who sees it, its layout, and which slice
+builds it (screens.md §5). UI slices S5–S15 build to it. GST rate-table editing (SC-45) moves
+to S6, as PR #24 proposed.
