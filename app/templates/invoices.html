@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% from "_macros.html" import stamp, gstin %}
+{% block title %}Invoices{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Invoices</h1>
+  <span class="muted">Entity: {{ current_user.selected_entity_name or "All my entities" }}</span>
+  {% if can_upload %}<div class="actions"><a class="btn btn-primary" href="/upload">Upload invoices</a></div>{% endif %}
+</div>
+
+{# SC-3, basic (S7): newest first, no filters or search yet (S15). Fields fill in after
+   extraction (S9); until then the file name stands in for the supplier. #}
+{% if rows %}
+<div class="table-wrap">
+  <table class="ledger">
+    <caption>{% if more %}The newest {{ limit }} invoices{% else %}{{ rows|length }} {{ "invoice" if rows|length == 1 else "invoices" }}{% endif %}, newest first</caption>
+    <thead>
+      <tr>
+        <th scope="col">Supplier</th><th scope="col">Invoice no.</th><th scope="col">Date</th>
+        <th scope="col" class="amount">Total</th><th scope="col">Entity</th><th scope="col">State</th>
+        <th scope="col">Flags</th><th scope="col">Age</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for row in rows %}
+      {% set inv = row.invoice %}
+      <tr>
+        <td>
+          {% if inv.supplier_gstin %}{{ gstin(inv.supplier_gstin) }}
+          {% else %}<span class="muted">Not read yet</span><br><span class="filename">{{ inv.file_name or "Unnamed file" }}</span>{% endif %}
+        </td>
+        <td>{% if inv.invoice_number %}<span class="invno">{{ inv.invoice_number }}</span>{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td><span class="muted">—</span></td>
+        <td class="amount">{% if inv.grand_total is not none %}{{ inv.grand_total|money }}{% else %}<span class="muted">—</span>{% endif %}</td>
+        <td>{{ row.entity_name }}</td>
+        <td>{{ stamp(inv.state) }}</td>
+        <td>
+          {% if row.blocks %}<span class="flagmark flagmark-block"><span aria-hidden="true">✕</span> {{ row.blocks }} blocked</span>{% endif %}
+          {% if row.warnings %}<span class="flagmark flagmark-warn"><span aria-hidden="true">!</span> {{ row.warnings }} {{ "warning" if row.warnings == 1 else "warnings" }}</span>{% endif %}
+          {% if not row.blocks and not row.warnings %}None{% endif %}
+        </td>
+        <td class="age">{{ inv.created_at|age }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty">
+  <h2>No invoices yet</h2>
+  {% if can_upload %}
+  <p>Invoices appear here once they are uploaded. Use Upload invoices to add some.</p>
+  {% else %}
+  <p>Invoices appear here once a clerk uploads them.</p>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

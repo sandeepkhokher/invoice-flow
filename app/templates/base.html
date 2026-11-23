@@ -11,6 +11,7 @@
   {# Self-hosted, same pinned version as before (2.0.4); no third-party hosts. #}
   <script src="/static/js/htmx-2.0.4.min.js" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"></script>
   <script src="/static/js/shell.js" defer></script>
+  <script src="/static/js/upload.js" defer></script>
 </head>
 <body hx-boost="true"{% if csrf_token %} hx-headers='{"X-CSRF-Token": "{{ csrf_token }}"}'{% endif %}>
   <a class="skip-link" href="#main">Skip to content</a>

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Any
@@ -45,6 +45,22 @@ def format_date(value: date | datetime | None) -> str:
     if value is None:
         return ""
     return value.strftime("%d-%b-%Y")
+
+
+def format_age(value: datetime | None, now: datetime | None = None) -> str:
+    """How long ago something arrived: `just now`, `5 min`, `3 h`, `2 d` (SC-3 age column)."""
+    if value is None:
+        return ""
+    if value.tzinfo is None:  # SQLite hands back naive datetimes; every stored one is UTC
+        value = value.replace(tzinfo=UTC)
+    seconds = max(0, int(((now or datetime.now(UTC)) - value).total_seconds()))
+    if seconds < 60:
+        return "just now"
+    if seconds < 3600:
+        return f"{seconds // 60} min"
+    if seconds < 86400:
+        return f"{seconds // 3600} h"
+    return f"{seconds // 86400} d"
 
 
 def _indian_grouping(digits: str) -> str:
@@ -106,6 +122,7 @@ TEMPLATES.env.filters["gstin"] = format_gstin
 TEMPLATES.env.filters["date"] = format_date
 TEMPLATES.env.filters["money"] = format_money
 TEMPLATES.env.filters["state_label"] = state_label
+TEMPLATES.env.filters["age"] = format_age
 
 
 def render(

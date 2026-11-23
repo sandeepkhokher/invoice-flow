@@ -32,7 +32,7 @@
     <ul>
       <li><a href="#work" aria-current="page">My work</a></li>
       <li><a href="#list">Invoices</a></li>
-      <li><a href="#forms">Upload</a></li>
+      <li><a href="#s7">Upload</a></li>
       <li><a href="#approve">Approvals</a></li>
       <li><a href="#list">Export</a></li>
       <li><a href="#list">Vendors</a></li>
@@ -194,6 +194,36 @@
             <section class="task"><div><h2>To review</h2><p class="age">No invoices to review. Invoices appear here after they are uploaded and read.</p></div></section>
             <section class="task"><div><h2>To approve</h2><p class="age">Nothing waiting for your approval.</p></div></section>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sg-section" id="s7">
+      <h2>Upload and the invoice list (added in S7)</h2>
+      <p>SC-10 Upload: a drop zone for many files, then one result row per file. SC-3 Invoice list: flag counts per row.</p>
+      <div class="two">
+        <div>
+          <h3>Drop zone</h3>
+          <div class="dropzone">
+            <input id="sg-files" type="file" multiple>
+            <label for="sg-files"><strong>Drop invoice files here</strong> or click to choose files</label>
+            <span class="help">PDF, PNG, JPEG, TIFF or WEBP. Up to 20 MB and 50 pages each, 200 files at a time.</span>
+            <ul class="filelist"><li>shree-ganesh-INV-0042.pdf</li><li>kaveri-1187-scan.jpg</li></ul>
+          </div>
+        </div>
+        <div>
+          <h3>Per-file results</h3>
+          <div class="table-wrap"><table class="ledger">
+            <thead><tr><th>File</th><th>Result</th><th>Details</th></tr></thead>
+            <tbody>
+              <tr><td class="filename">shree-ganesh-INV-0042.pdf</td><td><span class="result result-ok"><span aria-hidden="true">✓</span> Accepted</span></td><td><span class="stamp" data-state="received">Received</span> Invoice 41 for Acme Mfg Pvt Ltd</td></tr>
+              <tr><td class="filename">shree-ganesh-INV-0042 (1).pdf</td><td><span class="result result-ok"><span aria-hidden="true">✓</span> Accepted</span></td><td><span class="stamp" data-state="received">Received</span> Invoice 42 for Acme Mfg Pvt Ltd<div class="flagmark flagmark-block"><span aria-hidden="true">✕</span> Blocked: exact duplicate of invoice 41</div></td></tr>
+              <tr><td class="filename">statement.xlsx</td><td><span class="result result-rejected"><span aria-hidden="true">✕</span> Rejected</span></td><td>Not an allowed file type. Upload a PDF, PNG, JPEG, TIFF or WEBP file.</td></tr>
+              <tr><td class="filename">locked.pdf</td><td><span class="result result-rejected"><span aria-hidden="true">✕</span> Rejected</span></td><td>The PDF is encrypted or password-protected. Upload an unlocked copy.</td></tr>
+            </tbody>
+          </table></div>
+          <h3>Flag counts in a list</h3>
+          <p><span class="flagmark flagmark-block"><span aria-hidden="true">✕</span> 1 blocked</span> <span class="flagmark flagmark-warn"><span aria-hidden="true">!</span> 2 warnings</span></p>
         </div>
       </div>
     </section>

@@ -9,12 +9,14 @@ from app.accounts.models import (
     UserSession,
 )
 from app.audit.models import AuditEvent
+from app.domain.flags import Flag
 from app.domain.models import Invoice
 from app.jobs import Job
 
 __all__ = [
     "AuditEvent",
     "Entity",
+    "Flag",
     "GstRegistration",
     "Invoice",
     "Job",

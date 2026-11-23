@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "_macros.html" import csrf %}
+{% block title %}Upload{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Upload invoices</h1>
+  <a href="/invoices">See all invoices</a>
+</div>
+
+{# SC-10: many files at once, to a chosen entity or auto-assigned; a result per file (FR-10).
+   Works without JavaScript (plain multipart post); with htmx only the results region swaps. #}
+<form class="panel" method="post" action="/upload" enctype="multipart/form-data"
+      hx-post="/upload" hx-encoding="multipart/form-data" hx-target="#upload-results"
+      hx-swap="innerHTML" hx-indicator="#upload-busy" hx-disabled-elt="find button[type='submit']">
+  {{ csrf(csrf_token) }}
+  <div class="field narrow">
+    <label for="f-entity">Entity</label>
+    <select id="f-entity" name="entity" aria-describedby="h-entity">
+      {% if entities|length > 1 %}
+      <option value="auto" {% if choice == "auto" %}selected{% endif %}>Auto-assign from the buyer GSTIN</option>
+      {% endif %}
+      {% for eid, ename in entities %}
+      <option value="{{ eid }}" {% if choice == eid|string %}selected{% endif %}>{{ ename }}</option>
+      {% endfor %}
+    </select>
+    <span class="help" id="h-entity">{% if entities|length > 1 %}Auto-assign reads the buyer GSTIN from a PDF's text. For scans, choose the entity.{% else %}Invoices you upload go to this entity.{% endif %}</span>
+  </div>
+
+  <div class="dropzone" data-dropzone>
+    <input id="f-files" type="file" name="files" multiple
+           accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.webp,application/pdf,image/png,image/jpeg,image/tiff,image/webp"
+           aria-describedby="h-files">
+    <label for="f-files"><strong>Drop invoice files here</strong> or click to choose files</label>
+    <span class="help" id="h-files">PDF, PNG, JPEG, TIFF or WEBP. Up to {{ max_mb }} MB and {{ max_pages }} pages each, {{ max_files }} files at a time.</span>
+    <ul class="filelist" data-filelist></ul>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Upload</button>
+    <span id="upload-busy" class="htmx-indicator muted">Uploading and checking files…</span>
+  </div>
+</form>
+
+<section id="upload-results" aria-live="polite" aria-label="Upload results">
+  {% include "_upload_results.html" %}
+</section>
+{% endblock %}

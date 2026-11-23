@@ -11,7 +11,16 @@ class Settings(BaseSettings):
     data_dir: Path = Path("data")
     secret_key: str = "dev-only-change-me"  # noqa: S105 - overridden via env outside dev
     field_key: str | None = None
+    # In-process job worker (NFR-1: 4 by default; 0 switches the worker off).
     worker_threads: int = 4
+    worker_poll_seconds: float = 1.0
+    # NFR-4: a job claimed this long ago without finishing is retried by another worker.
+    job_lock_minutes: int = 10
+    job_max_attempts: int = 3
+    # FR-10 upload limits (data-protection §4).
+    max_upload_bytes: int = 20 * 1024 * 1024
+    max_pages: int = 50
+    max_files_per_upload: int = 200  # NFR-1 peak burst
     # Apply Alembic migrations when the app starts (one process, one SQLite file; NFR-6).
     auto_migrate: bool = True
     # data-protection §3: idle timeout 30 minutes.
@@ -19,6 +28,11 @@ class Settings(BaseSettings):
     # SC-1: lock an account for `login_lockout_minutes` after this many failed sign-ins in a row.
     login_max_failures: int = 5
     login_lockout_minutes: int = 15
+
+    @property
+    def files_dir(self) -> Path:
+        """Uploaded invoice files: under the data directory, never under `app/static`."""
+        return self.data_dir / "files"
 
     @property
     def database_url(self) -> str:

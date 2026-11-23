@@ -274,3 +274,28 @@ kbd { font-family: var(--font-mono); font-size: 0.85em; padding: 0 4px; border: 
 /* HTMX request indicator (htmx's own inline style is switched off in base.html) */
 .htmx-indicator { opacity: 0; }
 .htmx-request .htmx-indicator, .htmx-request.htmx-indicator { opacity: 1; transition: opacity 200ms ease-in; }
+
+/* ---- Added in S7 (ticket #12) for SC-10 Upload and SC-3 Invoice list; shown in the style guide ---- */
+
+/* Drop zone: the file input covers the zone, so a drop lands on it with or without JavaScript */
+.dropzone { position: relative; display: grid; gap: var(--s2); justify-items: center; text-align: center; padding: var(--s6) var(--s5); border: 2px dashed var(--control); border-radius: var(--radius); background: var(--paper); }
+.dropzone input[type="file"] { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+.dropzone label { font-size: var(--text-md); }
+.dropzone .help { font-size: var(--text-sm); color: var(--ink-soft); }
+.dropzone:hover, .dropzone[data-dragover] { border-color: var(--carbon); background: var(--carbon-wash); }
+.dropzone:focus-within { outline: 3px solid var(--carbon); outline-offset: 2px; }
+.filelist { list-style: none; margin: 0; padding: 0; font-size: var(--text-sm); text-align: left; }
+.filelist:empty { display: none; }
+.filelist li { font-family: var(--font-mono); overflow-wrap: anywhere; }
+
+/* Per-file upload result: icon + word + colour */
+.filename { font-family: var(--font-mono); overflow-wrap: anywhere; }
+.result { font-weight: 700; white-space: nowrap; }
+.result-ok { color: var(--cleared); }
+.result-rejected { color: var(--bahi); }
+
+/* Flag counts in a table cell (SC-3) and on an upload result: icon + word + colour */
+.flagmark { display: inline-block; white-space: nowrap; font-size: var(--text-sm); font-weight: 700; padding: 0 var(--s2); border-left: 3px solid; margin: var(--s1) var(--s1) 0 0; }
+.flagmark-block { color: var(--bahi); border-color: var(--bahi); background: var(--bahi-wash); }
+.flagmark-warn { color: var(--turmeric); border-color: var(--turmeric); background: var(--turmeric-wash); }
+.ledger td.age { white-space: nowrap; }

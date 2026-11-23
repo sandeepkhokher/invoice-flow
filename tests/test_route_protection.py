@@ -9,6 +9,7 @@ import re
 
 from fastapi.routing import APIRoute, iter_route_contexts
 from fastapi.staticfiles import StaticFiles
+from fastapi.testclient import TestClient
 from starlette.routing import Mount
 
 from app.api.deps import PUBLIC_PATHS
@@ -88,6 +89,11 @@ def test_a_new_route_is_protected_by_default(app, client):
     assert resp.status_code == 303 and "secret" not in resp.text
 
 
-def test_health_and_login_work_without_a_session(client):
-    assert client.get("/health").json() == {"status": "ok", "database": "ok"}
-    assert client.get("/login").status_code == 200
+def test_health_and_login_work_without_a_session(app):
+    with TestClient(app) as client:  # runs the lifespan, so the worker is up (S7)
+        assert client.get("/health").json() == {
+            "status": "ok",
+            "database": "ok",
+            "worker": "running",
+        }
+        assert client.get("/login").status_code == 200

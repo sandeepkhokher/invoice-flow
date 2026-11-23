@@ -45,11 +45,12 @@ def test_menu_matrix_matches_screens_md():
 @pytest.mark.parametrize(
     "who,labels",
     [
-        ("clerk", ["My work"]),
-        ("approver", ["My work"]),
-        ("accountant", ["My work"]),
-        ("auditor", ["My work"]),
-        ("admin", ["My work", "Admin", "Entities", "Users"]),
+        # S7 built Invoices (every role) and Upload (clerk).
+        ("clerk", ["My work", "Invoices", "Upload"]),
+        ("approver", ["My work", "Invoices"]),
+        ("accountant", ["My work", "Invoices"]),
+        ("auditor", ["My work", "Invoices"]),
+        ("admin", ["My work", "Invoices", "Admin", "Entities", "Users"]),
     ],
 )
 def test_rendered_menu_shows_only_built_pages_for_the_role(app, world, who, labels):
