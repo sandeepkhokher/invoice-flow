@@ -19,6 +19,8 @@ Requirement IDs (FR-n, NFR-n) are referenced from plan.md, tickets, tests and PR
 | 5 | Vendor master source? | Built automatically: a vendor is created on an invoice's first approval, keyed by GSTIN, and admins can import vendors from CSV. Bank details differing from the vendor master raise a `block` (fraud signal; see C3). | Proposed: PO to confirm |
 | 6 | Retention? | Keep files and the audit trail for at least **8 years**. GST law requires 72 months from the due date of the annual return, which reaches up to about 7.7 years after an invoice. v1 has no deletion feature. | Proposed: finance controller to confirm |
 | 7 | Login? | Local accounts in v1 (Argon2id), with the auth layer kept behind an interface so SSO (OIDC) can be added later as its own intent. | Proposed |
+| 8 | Near-duplicate thresholds (FR-31)? | Warn only when invoice dates are within 30 days **and** either the numbers are 1 edit apart or totals are within 1%. Without the date window, consecutive numbers from regular suppliers (INV-41, INV-42) warned on almost every invoice (PR #26 review). | Decided by PO, 2026-11-23 |
+| 9 | Can a person holding both admin and approver approve? | **No.** Holding `admin` on an entity blocks approve and reject there, whatever other roles the person has (§2 role table). | Decided by PO, 2026-11-23 (PR #25 review) |
 
 ---
 
@@ -71,7 +73,7 @@ Extra permissions: `flags:override`, `bank_details:view`.
 
 ### Duplicates
 - **FR-30** Exact duplicate: same supplier GSTIN + normalised invoice number + financial year, or the same file hash → `block`, linking to the original.
-- **FR-31** Near-duplicate: same supplier, and either normalised numbers within edit distance 1, or total within 1% with dates within 30 days → `warn`, linking to the candidates.
+- **FR-31** Near-duplicate: same supplier, invoice dates within 30 days, and either normalised numbers within edit distance 1 or totals within 1% → `warn`, linking to the candidates. (Amended 2026-11-23, decision 8: the 30-day window now applies to both conditions.)
 - **FR-32** Duplicate checks cover all invoices of **all entities** for the same supplier GSTIN, because the intent names cross-entity duplicates as a cost. A clerk sees a cross-entity match as "possible duplicate in another entity", without details of an entity they have no access to.
 - **FR-33** Overriding a duplicate `block` follows approval-and-audit §3.
 

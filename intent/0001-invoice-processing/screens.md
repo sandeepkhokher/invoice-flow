@@ -133,6 +133,8 @@ Bank details are masked everywhere unless the user holds `bank_details:view` and
 +-----------------------------+
 ```
 Approve stays disabled until every warning is acknowledged (FR-41). Reject asks for a reason.
+"Reviewed by" shows the clerk who submitted the invoice, so the approver knows who to ask;
+separation of duties is enforced on the server either way. **PO to confirm** (proposed default).
 
 ### SC-2 My work
 

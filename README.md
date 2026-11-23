@@ -18,3 +18,19 @@ committed artifacts that the next stage reads.
 | 6 Maintain | new `intent.md` from monitoring | `intent/` | Triage |
 
 Tickets live in GitHub Issues. The git history of `intent/` is the audit trail.
+
+## Run locally
+
+Needs Python 3.13 and [uv](https://docs.astral.sh/uv/).
+
+```
+make setup          # install dependencies
+make migrate        # create the SQLite database under ./data
+make run            # http://127.0.0.1:8000 (health check: /health)
+make test           # test suite;  make lint for lint + format check
+make gen-invoices   # write the synthetic sample invoices to evals/data/
+```
+
+Settings come from `INVOICE_FLOW_*` environment variables (see `app/config.py`). The app is
+being built slice by slice (see `intent/0001-invoice-processing/plan.md`); screens appear as
+their slices merge (`screens.md` §5).
