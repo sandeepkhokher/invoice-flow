@@ -64,3 +64,10 @@ def test_prompt_template_has_all_placeholders():
     template = (ROOT / ".claude/runner-prompt.md").read_text()
     for placeholder in ("{number}", "{title}", "{sid}", "{body}"):
         assert placeholder in template
+
+
+def test_usage_limit_is_detected_and_ordinary_failures_are_not():
+    assert runner.is_usage_limit("You've hit your 5-hour limit · resets 10:30pm (Asia/Calcutta)")
+    assert runner.is_usage_limit("Claude usage limit reached")
+    assert not runner.is_usage_limit("make test failed: 3 failed, 840 passed")
+    assert not runner.is_usage_limit("")
