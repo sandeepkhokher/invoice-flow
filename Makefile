@@ -1,4 +1,4 @@
-.PHONY: setup run test lint fmt eval verify-audit runner runner-dry runner-loop
+.PHONY: setup run test lint fmt gen-invoices eval verify-audit runner runner-dry runner-loop
 
 setup:        ## install dependencies
 	uv sync
@@ -14,6 +14,9 @@ lint:         ## lint and format check (CI runs this)
 
 fmt:          ## auto-format and fix lint
 	uv run ruff format . && uv run ruff check --fix .
+
+gen-invoices: ## write the synthetic eval set (about 60 invoices + ground truth) to evals/data/
+	uv run python -m evals.synth --out evals/data
 
 eval:         ## extraction eval (slice S10)
 	@echo "not implemented yet: slice S10" && exit 1

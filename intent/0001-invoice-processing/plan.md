@@ -151,3 +151,18 @@ Phase A was built as PRs #21 (A1) and #22 (A2–A5). Differences from the plan a
   runner builds only issues written by the repo owner.
 - **A5 needs the workspace trusted.** Headless sessions ignore `permissions.allow` in an untrusted
   folder. Run `claude` interactively in the repo once and accept the trust dialog.
+
+S4 (synthetic invoice generator, #9) differences:
+- **The generated set is not committed.** `make gen-invoices` writes `evals/data/` (about 19 MB),
+  which the existing `data/` rule in `.gitignore` already ignores. The set is byte-identical for
+  the fixed seed (a test proves it), so S10's `make eval` should run `make gen-invoices` first.
+- **Two dev dependencies:** `fpdf2` (digital PDFs with a real text layer) and `segno` (QR codes).
+  They are dev-only; the app does not import them.
+- **The generator lives in `evals/synth/`** and has its own small GSTIN checksum and number
+  normaliser, so it does not wait for S2 and S3 (parallel-safe). S10 should check S2/S3 against
+  the ground truth rather than reuse these.
+- **Synthetic markers:** every PAN starts with `ZX`, bank IFSC codes use fictitious `ZY..` bank
+  codes, emails use `.example`, and every page carries a small "Synthetic sample" footer.
+- **Rule IDs in the manifest are provisional** (`gst.tax_head`, `gst.gstin_checksum`,
+  `gst.arithmetic`, `duplicate.exact`, `duplicate.near`); S2/S3 may name them differently, and
+  S10 maps them.

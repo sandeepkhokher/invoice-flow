@@ -20,10 +20,12 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "fpdf2>=2.9.0",
     "httpx>=0.28.1",
     "pytest>=9.2.0",
     "pytest-cov>=7.1.0",
     "ruff>=0.17.6",
+    "segno>=1.6.6",
 ]
 
 [tool.ruff]
@@ -39,6 +41,8 @@ ignore = ["S101"]  # assert is fine in tests
 # hooks and the runner call trusted local tools (git, gh, uv, claude, make) by design
 ".claude/hooks/**" = ["S603", "S607"]
 "scripts/**" = ["S603", "S607"]
+# the eval-set generator uses a seeded PRNG on purpose (reproducible, not security)
+"evals/synth/**" = ["S311"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
