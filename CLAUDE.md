@@ -10,6 +10,8 @@ Built through the AI-native SDLC: every change traces to `intent/NNNN-*/{intent,
 - Test: `make test`. Healthy: `N passed`, no failures or errors
 - Lint: `make lint`. Healthy: `All checks passed!` and `N files already formatted`
 - Format and fix: `make fmt`
+- Migrate: `make migrate` (Alembic upgrade head on the DB under `INVOICE_FLOW_DATA_DIR`)
+- Verify audit chain: `make verify-audit`. Healthy: `audit chain OK: N events verified`
 - Run: `make run`. Healthy: `GET http://127.0.0.1:8000/health` → `{"status":"ok","database":"ok"}`
 - One test: `uv run pytest tests/test_health.py::test_health_reports_database_ok`
 - Ticket runner: `make runner` (one pass over issues labelled `agent:ready`)
@@ -27,8 +29,11 @@ For a bug fix, write the failing test first.
 ## Architecture
 - `app/main.py`: `create_app(settings)` factory; state on `app.state` (settings, engine, sessions).
 - `app/config.py`: settings from `INVOICE_FLOW_*` env vars. `app/db.py`: SQLite (WAL) engine, `Base`.
-- Planned: `app/domain/` (money, state machine, `transitions.py`), `app/tax/` (TaxRegime, IndiaGST),
-  `app/extraction/`, `app/intake/`, `app/approval/`, `app/audit/`, `app/export/`, `app/templates/`.
+- `app/domain/`: `money.py` (`Money`, `MoneyType`), `states.py`, `actor.py`, `models.py` (`Invoice`),
+  `transitions.py` (the only writer of invoice state). `app/audit/`: hash chain, `verify.py`.
+  `app/jobs.py`: jobs table. `app/models.py` imports every model for Alembic.
+- Planned: `app/tax/` (TaxRegime, IndiaGST),
+  `app/extraction/`, `app/intake/`, `app/approval/`, `app/export/`, `app/templates/`.
 - Migrations: Alembic (`alembic/`); one migration per DB slice.
 
 ## Conventions
