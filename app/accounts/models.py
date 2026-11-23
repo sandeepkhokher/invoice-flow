@@ -50,6 +50,11 @@ class Entity(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     legal_name: Mapped[str] = mapped_column(String(200), nullable=False)
     pan: Mapped[str] = mapped_column(String(10), nullable=False, unique=True)
+    # FR-23 / C8: invoices with every field high confidence and no block or warn flags skip
+    # review and go straight to ready_for_approval, marked auto-reviewed. Default on.
+    touch_free: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="1"
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     registrations: Mapped[list[GstRegistration]] = relationship(

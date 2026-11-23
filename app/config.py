@@ -1,7 +1,9 @@
 """Application settings, read from environment variables (prefix INVOICE_FLOW_)."""
 
 from pathlib import Path
+from typing import Literal
 
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,6 +30,17 @@ class Settings(BaseSettings):
     # SC-1: lock an account for `login_lockout_minutes` after this many failed sign-ins in a row.
     login_max_failures: int = 5
     login_lockout_minutes: int = 15
+    # S9 extraction (spec §5.3). The key comes only from the environment (data-protection §5);
+    # without it the demo extractor runs (walking skeleton: the flow works offline).
+    anthropic_api_key: SecretStr | None = Field(
+        default=None, validation_alias=AliasChoices("ANTHROPIC_API_KEY", "anthropic_api_key")
+    )
+    extraction_model: str = "claude-opus-5-5"
+    # Starting at `medium` (spec §5.3); S10's eval tunes it (C6).
+    extraction_effort: Literal["low", "medium", "high", "xhigh", "max"] = "medium"
+    extraction_max_tokens: int = 16000
+    # Ground truth for the demo extractor: `make gen-invoices` writes it.
+    demo_manifest: Path = Path("evals/data/manifest.json")
 
     @property
     def files_dir(self) -> Path:

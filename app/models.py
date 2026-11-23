@@ -11,6 +11,7 @@ from app.accounts.models import (
 from app.audit.models import AuditEvent
 from app.domain.flags import Flag
 from app.domain.models import Invoice
+from app.extraction.models import InvoiceField
 from app.jobs import Job
 
 __all__ = [
@@ -19,6 +20,7 @@ __all__ = [
     "Flag",
     "GstRegistration",
     "Invoice",
+    "InvoiceField",
     "Job",
     "PermissionGrant",
     "RoleGrant",

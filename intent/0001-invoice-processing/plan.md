@@ -363,3 +363,61 @@ S7 (upload intake, file store, jobs worker, issue #12) differs as follows:
   `.flagmark` (`-block`, `-warn`) and `.ledger td.age`, also in the style guide. The drop zone works
   without JavaScript (the file input covers it); `app/static/js/upload.js` only lists the chosen
   files and highlights the zone. Screenshots are in `doc/design/screenshots/s7/`.
+
+### S9 departures
+S9 (Claude extraction worker, issue #14) differs as follows:
+- **Package `app/extraction/`:** `schema.py` (`ExtractedInvoice`), `prompt.py` (static system
+  prompt), `extractor.py` (`Extractor` interface, `ClaudeExtractor`, `DemoExtractor`,
+  `make_extractor`), `checks.py` (deterministic checks, confidence merge, mapping onto S2's
+  `Invoice`), `models.py` (`invoice_fields`) and `service.py` (the `extract` job handler,
+  registered in `create_app`; `app.state.extraction` holds the extractor so tests swap it).
+- **The API call** is `client.beta.messages.parse`: `fallbacks: "default"` needs the beta
+  namespace and the `server-side-fallback-2026-07-01` beta. `output_format=ExtractedInvoice`,
+  `output_config={"effort": "medium"}` (setting `INVOICE_FLOW_EXTRACTION_EFFORT`), thinking left at
+  the model default (adaptive). The system prompt carries `cache_control`, but at about 700
+  tokens it may be under the model's minimum cacheable prefix, so the cache may not engage; S10
+  should read `cache_read_input_tokens` from the logs and decide whether it matters.
+- **Schema-invalid output is retried once** (spec §5.3 and the ticket); FR-22's "after 2
+  retries" reads as the same rule counted differently. A refusal (after the server-side
+  fallback) fails at once. API errors are retried by the SDK (`max_retries=3`), then fail with a
+  readable reason; extraction failures do not use the job queue's own retries.
+- **Amounts and dates are strings in the schema** (plain decimal, ISO date), parsed with
+  `Decimal`; an unparsable value is stored as printed with confidence `low`.
+- **Confidence merge.** The text-layer check covers the header, party GSTINs, supplier name,
+  totals and IRN, not line quantities and rates (they print in too many forms; the arithmetic
+  check covers them). A PDF with under 40 characters of extractable text counts as a scan, and
+  images skip the check. Several failed checks still lower a field one level only.
+  The arithmetic check reuses S2's §5 flags.
+- **Line items live in `invoice_fields`** under indexed names (`lines[0].hsn_sac`), not in a
+  separate `line_items` table (spec §5.4), so the review screen (S11) edits every field the same
+  way. `invoice_fields` keeps the model's rating, the merged confidence and the failed checks.
+- **Bank details are stored masked only** (`XXXXXXXX7890`): the account number and IFSC are
+  restricted, and field encryption is S8's. S8 should store the full values encrypted (a
+  re-extraction or S8's vendor flow can supply them).
+- **Invoice columns added:** `supplier_name`, `invoice_date`, `irn`, `auto_reviewed`; the
+  existing `supplier_gstin`, `invoice_number`, `number_norm`, `fy` and money columns are filled.
+  **`entities.touch_free`** (default on, C8) is the per-entity setting; it has no admin UI yet
+  (S6's entity configuration can add the toggle).
+- **Touch-free (FR-23):** every stored field `high` (null fields included, rated by the model as
+  surely absent) and no open `block` or `warn` flag, including intake's exact-file duplicate.
+  `info` flags do not stop it. The `extraction_touch_free` audit event carries
+  `auto_reviewed: true`; SC-3 shows "Auto-reviewed" under the state, and approvers' screens (S12)
+  should show the same.
+- **Duplicate checks run within the invoice's own entity** (through `EntityScope`), against
+  every non-discarded invoice with the same supplier GSTIN. Cross-entity matches (FR-32, C2) stay
+  with S11. Identical files are not flagged again (intake's `DUP-EXACT-FILE` already is).
+- **`received -> extracting` commits before the API call**, so SC-3 shows `Extracting` at once;
+  the job's final writes commit with the job. A re-run (crash, or a clerk's retry in S11) picks
+  up an invoice left `extracting` and replaces its fields; identical open flags are not raised
+  twice.
+- **SC-3** now shows supplier name and GSTIN, invoice date, the extraction-failure reason and
+  "Auto-reviewed", and refreshes itself every 3 seconds (htmx) while any invoice is `received` or
+  `extracting`. No stylesheet changes. Screenshots (demo extractor, synthetic invoices) are in
+  `doc/design/screenshots/s9/`.
+- **`make seed-demo` also registers the eval set's three buyer entities** (from
+  `evals/data/manifest.json` when `make gen-invoices` has run), with the demo users' roles on
+  them, so demo-extracted invoices are addressed to our registrations and can go touch-free.
+  Not built: assigning an entity from the extracted buyer GSTIN (S7's note); scans still need the
+  clerk to pick the entity when they have several.
+- **Tests** never see a key: `tests/conftest.py` removes `ANTHROPIC_API_KEY` and points the demo
+  manifest at an empty path, so the suite is the same on every machine.

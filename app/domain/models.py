@@ -6,10 +6,12 @@
 
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     ForeignKey,
     Integer,
@@ -63,6 +65,14 @@ class Invoice(Base):
     file_size: Mapped[int | None] = mapped_column(Integer)
     page_count: Mapped[int | None] = mapped_column(Integer)
     uploaded_by: Mapped[int | None] = mapped_column(Integer)  # user id; no FK (migration 0003)
+    # Extracted header values (S9, FR-20); the full field set is in `invoice_fields`.
+    supplier_name: Mapped[str | None] = mapped_column(String(200))
+    invoice_date: Mapped[date | None] = mapped_column(Date)
+    irn: Mapped[str | None] = mapped_column(String(64))
+    # FR-23 / C8: went straight to ready_for_approval on the touch-free path.
+    auto_reviewed: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow

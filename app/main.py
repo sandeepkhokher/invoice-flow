@@ -11,11 +11,14 @@ from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app import jobs
 from app.api import admin, auth, invoices, pages
 from app.api.deps import CsrfFailed, LoginRequired, guard
 from app.api.templating import render
 from app.config import Settings, get_settings
 from app.db import make_engine, make_sessionmaker, ping
+from app.extraction.extractor import make_extractor
+from app.extraction.service import ExtractionService
 from app.intake.store import FileStore
 from app.migrate import upgrade_to_head
 from app.scoping import Forbidden, NotFound
@@ -90,8 +93,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     engine = make_engine(settings.database_url)
 
     sessions = make_sessionmaker(engine)
-    # Job handlers by kind. S7 registers none; S9 adds `extract`. The worker reads this live.
-    job_handlers: dict[str, Handler] = {}
+    # Invoice files: outside every served directory (data-protection §4); refuses otherwise.
+    file_store = FileStore(settings.files_dir, served_dirs=(STATIC_DIR,))
+    # S9: Claude extraction, or the demo extractor when ANTHROPIC_API_KEY is unset.
+    extraction = ExtractionService(sessions, file_store, make_extractor(settings))
+    # Job handlers by kind. The worker reads this mapping live.
+    job_handlers: dict[str, Handler] = {jobs.EXTRACT: extraction.handle}
     worker = Worker(
         sessions,
         job_handlers,
@@ -125,8 +132,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.sessions = sessions
     app.state.job_handlers = job_handlers
     app.state.worker = worker
-    # Invoice files: outside every served directory (data-protection §4); refuses otherwise.
-    app.state.file_store = FileStore(settings.files_dir, served_dirs=(STATIC_DIR,))
+    app.state.file_store = file_store
+    app.state.extraction = extraction
 
     app.add_exception_handler(LoginRequired, _login_required)
     app.add_exception_handler(NotFound, _not_found)

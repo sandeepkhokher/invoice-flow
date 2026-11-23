@@ -4,13 +4,19 @@ All data is synthetic (data-protection §7): PANs start with `ZX` like the S4 ev
 emails use the reserved `.example` domain. Passwords are never committed: each run sets new
 random passwords (or `INVOICE_FLOW_DEMO_PASSWORD` for every demo user, if set) and prints them.
 Running it again keeps the entities and resets the demo users' passwords and grants.
+
+When the synthetic eval set exists (`make gen-invoices`, S4), its buyer entities and their
+GSTINs are added too, so invoices read by the demo extractor (S9, no API key) are addressed to
+one of our registrations and can take the whole flow, including the touch-free path.
 """
 
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import sys
+from pathlib import Path
 
 from sqlalchemy.orm import Session
 
@@ -74,16 +80,42 @@ def _entity(db: Session, spec: dict) -> Entity:
     entity = db.query(Entity).filter_by(pan=spec["pan"]).one_or_none()
     if entity is None:
         entity = create_entity(db, SYSTEM, legal_name=spec["legal_name"], pan=spec["pan"])
-    for state, address in spec["registrations"]:
-        number = gstin(state, spec["pan"])
+    registrations = spec.get("gstins") or [
+        (gstin(state, spec["pan"]), address) for state, address in spec["registrations"]
+    ]
+    for number, address in registrations:
         if db.query(GstRegistration).filter_by(gstin=number).one_or_none() is None:
             add_registration(db, SYSTEM, entity, gstin=number, address=address)
     return entity
 
 
-def seed(db: Session, password: str | None = None) -> list[tuple[str, str, str]]:
+def eval_set_entities(manifest: Path) -> list[dict]:
+    """The eval set's buyer entities as entity specs, or none when the set is not generated."""
+    try:
+        data = json.loads(manifest.read_text())
+    except (OSError, ValueError):
+        return []
+    specs = []
+    for e in data.get("entities", []):
+        regs = [r["gstin"] for r in e.get("registrations", [])]
+        if not regs:
+            continue
+        specs.append(
+            {
+                "legal_name": e["name"],
+                "pan": regs[0][2:12],  # characters 3-12 of a GSTIN are the PAN
+                "registrations": (),
+                "gstins": [(g, "Synthetic address (eval set)") for g in regs],
+            }
+        )
+    return specs
+
+
+def seed(
+    db: Session, password: str | None = None, extra_entities: list[dict] | None = None
+) -> list[tuple[str, str, str]]:
     """Create or refresh the demo data. Returns (role, email, password) for each user."""
-    entities = [_entity(db, spec) for spec in ENTITIES]
+    entities = [_entity(db, spec) for spec in [*ENTITIES, *(extra_entities or [])]]
     entity_ids = [e.id for e in entities]
     out = []
     for email, name, role in USERS:
@@ -118,8 +150,12 @@ def main(argv: list[str] | None = None) -> int:
     engine = make_engine(settings.database_url)
     try:
         with make_sessionmaker(engine)() as db:
-            users = seed(db, password)
-            entities = [(e["legal_name"], e["pan"], len(e["registrations"])) for e in ENTITIES]
+            extra = eval_set_entities(settings.demo_manifest)
+            users = seed(db, password, extra)
+            entities = [
+                (e["legal_name"], e["pan"], len(e.get("gstins") or e["registrations"]))
+                for e in [*ENTITIES, *extra]
+            ]
             db.commit()
     finally:
         engine.dispose()
