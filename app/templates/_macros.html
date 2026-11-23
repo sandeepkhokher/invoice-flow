@@ -1,45 +1,66 @@
 {# Form helpers: a label on every input; errors next to the field, linked by aria-describedby. #}
 {% macro field(name, label, errors, value="", type="text", required=false, autocomplete=none, hint=none, maxlength=none, cls="") -%}
   {%- set err = errors.get(name) -%}
-  <label for="f-{{ name }}">{{ label }}</label>
-  {% if hint %}<p class="muted" id="h-{{ name }}" style="margin:0 0 4px">{{ hint }}</p>{% endif %}
-  {% if type == "textarea" %}
-  <textarea id="f-{{ name }}" name="{{ name }}" {% if required %}required{% endif %}
-    {% if err %}aria-invalid="true" aria-describedby="e-{{ name }}"{% elif hint %}aria-describedby="h-{{ name }}"{% endif %}>{{ value or "" }}</textarea>
-  {% else %}
-  <input id="f-{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value or '' }}" class="{{ cls }}"
-    {% if required %}required{% endif %} {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
-    {% if maxlength %}maxlength="{{ maxlength }}"{% endif %}
-    {% if err %}aria-invalid="true" aria-describedby="e-{{ name }}"{% elif hint %}aria-describedby="h-{{ name }}"{% endif %}>
-  {% endif %}
-  {% if err %}<p class="field-error" id="e-{{ name }}">{{ err }}</p>{% endif %}
+  <div class="field"{% if err %} data-invalid{% endif %}>
+    <label for="f-{{ name }}">{{ label }}</label>
+    {% if type == "textarea" %}
+    <textarea id="f-{{ name }}" name="{{ name }}" {% if required %}required{% endif %}
+      {% if err %}aria-invalid="true" aria-describedby="e-{{ name }}"{% elif hint %}aria-describedby="h-{{ name }}"{% endif %}>{{ value or "" }}</textarea>
+    {% else %}
+    <input id="f-{{ name }}" name="{{ name }}" type="{{ type }}" value="{{ value or '' }}"{% if cls %} class="{{ cls }}"{% endif %}
+      {% if required %}required{% endif %} {% if autocomplete %}autocomplete="{{ autocomplete }}"{% endif %}
+      {% if maxlength %}maxlength="{{ maxlength }}"{% endif %}
+      {% if err %}aria-invalid="true" aria-describedby="e-{{ name }}"{% elif hint %}aria-describedby="h-{{ name }}"{% endif %}>
+    {% endif %}
+    {% if err %}<span class="error" id="e-{{ name }}">✕ {{ err }}</span>{% endif %}
+    {% if hint %}<span class="help" id="h-{{ name }}">{{ hint }}</span>{% endif %}
+  </div>
 {%- endmacro %}
 
 {% macro csrf(token) -%}<input type="hidden" name="csrf_token" value="{{ token }}">{%- endmacro %}
+
+{# An invoice state as an ink stamp (visual-design.md §4): the word always shows. #}
+{% macro stamp(state, large=false, detail=none) -%}
+  <span class="stamp{% if large %} stamp-lg{% endif %}" data-state="{{ state }}">{{ state|state_label }}{% if detail %} · {{ detail }}{% endif %}</span>
+{%- endmacro %}
+
+{# A GSTIN grouped for reading, in mono (ux-standards). #}
+{% macro gstin(value) -%}<span class="gstin">{{ value|gstin }}</span>{%- endmacro %}
+
+{# Page-level message: icon + word + colour. kind: info, ok, error. #}
+{% macro notice(kind="info", role=none) -%}
+  <div class="notice{{ {"ok": " notice-ok", "error": " notice-error"}.get(kind, "") }}"{% if role %} role="{{ role }}"{% endif %}>
+    <span class="icon" aria-hidden="true">{{ {"ok": "✓", "error": "✕"}.get(kind, "i") }}</span>
+    <div>{{ caller() }}</div>
+  </div>
+{%- endmacro %}
 
 {# The roles grid used on SC-41: one fieldset per entity the admin manages. #}
 {% macro grants_grid(grid, roles, permissions, max_tier, errors) -%}
   {% for row in grid %}
   {% set eid = row.entity.id %}
-  <fieldset>
+  <fieldset class="grants">
     <legend>{{ row.entity.legal_name }}</legend>
     <div class="checks" role="group" aria-label="Roles on {{ row.entity.legal_name }}">
       {% for role in roles %}
       <label><input type="checkbox" name="role:{{ eid }}" value="{{ role.value }}" {% if role in row.grants.roles %}checked{% endif %}> {{ role.value }}</label>
       {% endfor %}
     </div>
-    <label for="tier-{{ eid }}" style="font-weight:400">Approver tier (1–{{ max_tier }}, approvers only)</label>
-    <input type="number" id="tier-{{ eid }}" name="tier:{{ eid }}" min="1" max="{{ max_tier }}" value="{{ row.grants.tier or '' }}"
-      {% if errors.get('tier:' ~ eid) %}aria-invalid="true" aria-describedby="e-tier-{{ eid }}"{% endif %}>
-    {% if errors.get('tier:' ~ eid) %}<p class="field-error" id="e-tier-{{ eid }}">{{ errors.get('tier:' ~ eid) }}</p>{% endif %}
+    {% set terr = errors.get('tier:' ~ eid) %}
+    <div class="field"{% if terr %} data-invalid{% endif %}>
+      <label for="tier-{{ eid }}">Approver tier (1–{{ max_tier }}, approvers only)</label>
+      <input type="number" id="tier-{{ eid }}" name="tier:{{ eid }}" min="1" max="{{ max_tier }}" value="{{ row.grants.tier or '' }}"
+        {% if terr %}aria-invalid="true" aria-describedby="e-tier-{{ eid }}"{% endif %}>
+      {% if terr %}<span class="error" id="e-tier-{{ eid }}">✕ {{ terr }}</span>{% endif %}
+    </div>
     <div class="checks" role="group" aria-label="Extra permissions on {{ row.entity.legal_name }}">
       {% for perm in permissions %}
       <label><input type="checkbox" name="perm:{{ eid }}" value="{{ perm.value }}" {% if perm in row.grants.permissions %}checked{% endif %}> <span class="mono">{{ perm.value }}</span></label>
       {% endfor %}
     </div>
-    {% if errors.get('perm:' ~ eid) %}<p class="field-error">{{ errors.get('perm:' ~ eid) }}</p>{% endif %}
-    {% if errors.get('role:' ~ eid) %}<p class="field-error">{{ errors.get('role:' ~ eid) }}</p>{% endif %}
+    {% if errors.get('perm:' ~ eid) %}<div class="field" data-invalid><span class="error">✕ {{ errors.get('perm:' ~ eid) }}</span></div>{% endif %}
+    {% if errors.get('role:' ~ eid) %}<div class="field" data-invalid><span class="error">✕ {{ errors.get('role:' ~ eid) }}</span></div>{% endif %}
   </fieldset>
   {% endfor %}
-  {% if errors.get('grants') %}<p class="field-error">{{ errors.get('grants') }}</p>{% endif %}
+  {% if errors.get('grants') %}<div class="field" data-invalid><span class="error">✕ {{ errors.get('grants') }}</span></div>{% endif %}
 {%- endmacro %}

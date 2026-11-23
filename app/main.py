@@ -1,9 +1,11 @@
 """FastAPI application factory."""
 
+from pathlib import Path
 from urllib.parse import quote
 
 from fastapi import Depends, FastAPI, Request
 from fastapi.responses import PlainTextResponse, RedirectResponse, Response
+from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.api import admin, auth, pages
@@ -13,6 +15,12 @@ from app.config import Settings, get_settings
 from app.db import make_engine, make_sessionmaker, ping
 from app.migrate import upgrade_to_head
 from app.scoping import Forbidden, NotFound
+
+# Public assets only: the stylesheet, self-hosted fonts and HTMX (visual-design.md §5).
+# This mount is the one thing served without sign-in besides /login and /health, because the
+# login page needs it; tests pin which file types may live here. Never put data in it.
+STATIC_DIR = Path(__file__).resolve().parent / "static"
+STATIC_PATH = "/static"
 
 
 def _login_required(request: Request, exc: LoginRequired) -> Response:
@@ -103,4 +111,5 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(auth.router)
     app.include_router(pages.router)
     app.include_router(admin.router)
+    app.mount(STATIC_PATH, StaticFiles(directory=STATIC_DIR, html=False), name="static")
     return app

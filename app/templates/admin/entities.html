@@ -1,44 +1,50 @@
 {% extends "base.html" %}
-{% from "_macros.html" import field, csrf %}
+{% from "_macros.html" import field, csrf, gstin %}
 {% block title %}Admin: entities{% endblock %}
 {% block content %}
 <div class="page-head">
   <h1>Entities</h1>
-  <a class="button primary" href="#add-entity">Add entity</a>
+  <a href="#add-entity">Add an entity below</a>
 </div>
 
 {% if entities %}
-<table>
-  <caption class="muted" style="text-align:left;padding:6px 0">Entities you administer and their GST registrations</caption>
-  <thead><tr><th scope="col">Legal name</th><th scope="col">PAN</th><th scope="col">GST registrations</th></tr></thead>
-  <tbody>
-  {% for e in entities %}
-    <tr>
-      <td><a href="/admin/entities/{{ e.id }}">{{ e.legal_name }}</a></td>
-      <td class="mono">{{ e.pan }}</td>
-      <td>
-        {% for r in e.registrations %}
-          <div><span class="mono">{{ r.gstin|gstin }}</span> <span class="muted">· {{ state_name(r.state_code) }}</span></div>
-        {% else %}
-          <span class="muted">None yet. <a href="/admin/entities/{{ e.id }}#add-registration">Add a GST registration</a>.</span>
-        {% endfor %}
-      </td>
-    </tr>
-  {% endfor %}
-  </tbody>
-</table>
+<div class="table-wrap">
+  <table class="ledger">
+    <caption>Entities you administer and their GST registrations</caption>
+    <thead><tr><th scope="col">Legal name</th><th scope="col">PAN</th><th scope="col">GST registrations</th></tr></thead>
+    <tbody>
+    {% for e in entities %}
+      <tr>
+        <td><a href="/admin/entities/{{ e.id }}">{{ e.legal_name }}</a></td>
+        <td class="mono">{{ e.pan }}</td>
+        <td>
+          {% for r in e.registrations %}
+            <div>{{ gstin(r.gstin) }} <span class="muted">· {{ state_name(r.state_code) }}</span></div>
+          {% else %}
+            <span class="muted">None yet. <a href="/admin/entities/{{ e.id }}#add-registration">Add a GST registration</a>.</span>
+          {% endfor %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
 {% else %}
-<p class="muted">No entities yet. Add one below.</p>
+<div class="empty">
+  <h2>No entities yet</h2>
+  <p>Entities you administer appear here with their GST registrations. Add one below.</p>
+</div>
 {% endif %}
 
-<section class="card" id="add-entity" aria-labelledby="add-entity-h" style="margin-top:18px">
-  <h2 id="add-entity-h" style="margin-top:0">Add entity</h2>
+{# One primary action on this screen (ux-standards): the form's "Add entity" button. #}
+<section class="panel narrow" id="add-entity" aria-labelledby="add-entity-h">
+  <h2 id="add-entity-h">Add entity</h2>
   <p class="muted">You become an admin of the new entity. Add its GST registrations next.</p>
   <form method="post" action="/admin/entities">
     {{ csrf(csrf_token) }}
     {{ field("legal_name", "Legal name", errors, value=form.get("legal_name"), required=true, maxlength=200) }}
     {{ field("pan", "PAN", errors, value=form.get("pan"), required=true, maxlength=10, cls="mono", hint="10 characters, for example AAPFU0939F.") }}
-    <div class="actions"><button type="submit" class="primary">Add entity</button></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Add entity</button></div>
   </form>
 </section>
 {% endblock %}

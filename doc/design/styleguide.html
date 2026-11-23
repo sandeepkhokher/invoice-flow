@@ -4,10 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>invoice-flow style guide</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Mono:wght@400;700&family=Atkinson+Hyperlegible+Next:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="invoice-flow.css">
+<!-- The app's own stylesheet; it loads the self-hosted fonts from app/static/fonts/. -->
+<link rel="stylesheet" href="../../app/static/css/invoice-flow.css">
 <style>
   /* Style-guide page only */
   .sg-section { margin: var(--s7) 0; }
@@ -158,6 +156,45 @@
         <a href="#">View the document</a>
         <p class="muted" style="margin-top:var(--s3)">Reviewed by S. Iyer</p>
         <div class="buttons"><button type="button" class="btn btn-danger">Reject…</button><button type="button" class="btn btn-primary">Approve</button></div>
+      </div>
+    </section>
+
+    <section class="sg-section" id="s5">
+      <h2>Shell details, notices and admin forms (added in S5.1)</h2>
+      <p>Used by the sign-in page, Account and the admin screens (SC-1, SC-6, SC-40, SC-41).</p>
+      <div class="two">
+        <div>
+          <h3>Account menu and entity switcher</h3>
+          <div class="row">
+            <form class="switcher"><label for="sw">Entity</label><select id="sw"><option>All my entities</option></select><button type="button" class="btn">Switch</button></form>
+            <details class="usermenu" open><summary>R. Mehta ▾</summary><div class="usermenu-panel"><a href="#s5">Account</a><button type="button" class="linklike">Sign out</button></div></details>
+          </div>
+          <h3 style="margin-top:var(--s7)">Notices</h3>
+          <div class="notice"><span class="icon" aria-hidden="true">i</span><div>Your session ended after 30 minutes without activity. Sign in again.</div></div>
+          <div class="notice notice-ok"><span class="icon" aria-hidden="true">✓</span><div><p><strong>User invited.</strong> Their temporary password is shown only now:</p><p class="mono">kq7-Vt2m-9XhP</p></div></div>
+          <div class="notice notice-error"><span class="icon" aria-hidden="true">✕</span><div>Email or password is wrong, or the account is locked. Try again in 15 minutes.</div></div>
+          <h3>User status</h3>
+          <p><span class="status">✓ Active</span> &nbsp; <span class="status status-off">✕ Deactivated</span></p>
+          <h3>Inline confirm (no browser dialogs)</h3>
+          <details class="confirm" open><summary>Remove…</summary><form><p>Invoices billed to <span class="gstin">29 AAGCB7383J 1Z 4</span> will no longer be matched to this entity.</p><button type="button" class="btn btn-danger">Remove registration</button></form></details>
+        </div>
+        <div>
+          <div class="panel">
+            <h2>Roles per entity</h2>
+            <fieldset class="grants">
+              <legend>Acme Manufacturing Pvt Ltd</legend>
+              <div class="checks"><label><input type="checkbox" checked> clerk</label><label><input type="checkbox" checked> approver</label><label><input type="checkbox"> accountant</label><label><input type="checkbox"> admin</label></div>
+              <div class="field"><label for="tier">Approver tier (1–3, approvers only)</label><input type="number" id="tier" value="2"></div>
+              <div class="checks"><label><input type="checkbox"> <span class="mono">flags:override</span></label><label><input type="checkbox"> <span class="mono">bank_details:view</span></label></div>
+            </fieldset>
+            <div class="form-actions"><button type="button" class="btn btn-primary">Save grants</button></div>
+          </div>
+          <h3>My work rows before counts exist (S15 adds them)</h3>
+          <div class="worklist">
+            <section class="task"><div><h2>To review</h2><p class="age">No invoices to review. Invoices appear here after they are uploaded and read.</p></div></section>
+            <section class="task"><div><h2>To approve</h2><p class="age">Nothing waiting for your approval.</p></div></section>
+          </div>
+        </div>
       </div>
     </section>
 

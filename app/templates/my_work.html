@@ -6,15 +6,24 @@
   <span class="muted">Entity: {{ current_user.selected_entity_name or "All my entities" }}</span>
 </div>
 {% if not has_access %}
-<p class="notice">You have no access to any entity yet. Ask an admin to give you a role.</p>
+<div class="empty">
+  <h2>No access yet</h2>
+  <p>You have no access to any entity yet. Ask an admin to give you a role.</p>
+</div>
 {% elif not cards %}
-<p class="muted">Your roles have no task queue. Use the menu to find what you need.</p>
+<div class="empty">
+  <h2>No task queue</h2>
+  <p>Your roles have no task queue. Use the menu to find what you need.</p>
+</div>
 {% else %}
-<div class="cards">
+{# Ledger rows, not cards (visual-design.md §4). S15 adds counts, ages and the link to the oldest task. #}
+<div class="worklist">
   {% for card in cards %}
-  <section class="card" aria-labelledby="card-{{ loop.index }}">
-    <h2 id="card-{{ loop.index }}">{{ card.title }}</h2>
-    <p class="muted">{{ card.empty }}</p>
+  <section class="task" aria-labelledby="task-{{ loop.index }}">
+    <div>
+      <h2 id="task-{{ loop.index }}">{{ card.title }}</h2>
+      <p class="age">{{ card.empty }}</p>
+    </div>
   </section>
   {% endfor %}
 </div>

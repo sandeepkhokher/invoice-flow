@@ -4,7 +4,7 @@ Produced by: Claude Opus 5.5, in-session, after the product owner saw the unstyl
 and pointed out that no visual design had been decided. Stage 2 (Design) artifact, alongside
 `spec.md` (what), `screens.md` (which screens and their structure) and the `ux-standards` skill
 (behaviour rules). This file decides the look.
-Implementation: `doc/design/invoice-flow.css` (tokens and components) and
+Implementation: `app/static/css/invoice-flow.css` (tokens and components; moved from `doc/design/` in S5.1) and
 `doc/design/styleguide.html` (every component with real-looking content; open it in a browser).
 
 Everything here is a proposal; merging the PR accepts it. Comment on anything to change.
@@ -28,7 +28,7 @@ Everything here is a proposal; merging the PR accepts it. Comment on anything to
 |---|---|---|
 | CSS approach | One hand-written stylesheet with CSS custom properties (tokens); no framework, no build step | Matches the HTMX/Jinja stack (spec §5.1); every template uses the same classes |
 | Typeface | **Atkinson Hyperlegible Next** for UI, **Atkinson Hyperlegible Mono** for GSTINs, invoice numbers and keys | Designed for character distinction: 0/O, 1/l/I, 5/S, 8/B are unmistakable, which is exactly what reviewing GSTINs and invoice numbers needs. One family keeps it quiet |
-| Fonts | Self-hosted in `app/static/fonts/` (SIL Open Font License); no Google Fonts call from the app | Finance app on a local network; no third-party requests (data-protection). The style guide alone loads them from Google Fonts for convenience |
+| Fonts | Self-hosted in `app/static/fonts/` (SIL Open Font License); no Google Fonts call from the app | Finance app on a local network; no third-party requests (data-protection). The style guide loads the same files through the app stylesheet |
 | Numbers | Tabular, lining figures everywhere; amounts right-aligned | Columns of rupees line up |
 | Signature element | **Invoice states as ink stamps** (double-ruled outline, state colour, word always present); the large stamp on an invoice header is tilted 3° and "stamps in" once when the state changes | The one memorable thing, taken from how paper invoices are actually marked. Everything else stays quiet |
 | Structure | Ledger rules instead of cards: ruled tables, a 2 px ink rule under headers, a double rule under totals, and a red ledger-margin line between menu and content | Encodes structure (header, total, margin) rather than decorating; avoids the generic card dashboard |

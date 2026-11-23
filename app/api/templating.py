@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,8 @@ from fastapi.templating import Jinja2Templates
 from starlette.responses import HTMLResponse
 
 from app.api.menu import links_for
+from app.domain.money import Money
+from app.domain.states import InvoiceState
 
 TEMPLATES = Jinja2Templates(directory=Path(__file__).resolve().parent.parent / "templates")
 
@@ -44,8 +47,65 @@ def format_date(value: date | datetime | None) -> str:
     return value.strftime("%d-%b-%Y")
 
 
+def _indian_grouping(digits: str) -> str:
+    """`1234567` -> `12,34,567`: the last three digits, then groups of two."""
+    if len(digits) <= 3:
+        return digits
+    head, tail = digits[:-3], digits[-3:]
+    groups = []
+    while len(head) > 2:
+        groups.insert(0, head[-2:])
+        head = head[:-2]
+    if head:
+        groups.insert(0, head)
+    return ",".join(groups) + "," + tail
+
+
+def format_money(value: Money | Decimal | None, currency: str = "INR") -> str:
+    """ux-standards: `₹1,23,456.00` for INR; other currencies `USD 1,234.00`.
+
+    The one way templates show money (`{{ amount|money }}`). Takes `Money` or `Decimal`
+    rupees, never `float`.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, Money):
+        amount = value.amount
+    elif isinstance(value, Decimal):
+        amount = value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    else:
+        raise TypeError(f"money filter takes Money or Decimal, not {type(value).__name__}")
+    sign = "-" if amount < 0 else ""
+    whole, _, paise = f"{abs(amount):.2f}".partition(".")
+    if currency == "INR":
+        return f"{sign}₹{_indian_grouping(whole)}.{paise}"
+    return f"{sign}{currency} {int(whole):,}.{paise}"
+
+
+# Invoice states as stamps (visual-design.md §4): the word is always shown, never colour alone.
+STATE_LABELS: dict[InvoiceState, str] = {
+    InvoiceState.RECEIVED: "Received",
+    InvoiceState.EXTRACTING: "Extracting",
+    InvoiceState.EXTRACTION_FAILED: "Extraction failed",
+    InvoiceState.NEEDS_REVIEW: "Needs review",
+    InvoiceState.READY_FOR_APPROVAL: "Ready for approval",
+    InvoiceState.IN_APPROVAL: "In approval",
+    InvoiceState.REJECTED: "Rejected",
+    InvoiceState.APPROVED: "Approved",
+    InvoiceState.EXPORTED: "Exported",
+    InvoiceState.PAID: "Paid",
+    InvoiceState.DISCARDED: "Discarded",
+}
+
+
+def state_label(state: InvoiceState | str) -> str:
+    return STATE_LABELS[InvoiceState(state)]
+
+
 TEMPLATES.env.filters["gstin"] = format_gstin
 TEMPLATES.env.filters["date"] = format_date
+TEMPLATES.env.filters["money"] = format_money
+TEMPLATES.env.filters["state_label"] = state_label
 
 
 def render(

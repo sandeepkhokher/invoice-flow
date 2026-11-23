@@ -4,38 +4,40 @@
 {% block content %}
 <div class="page-head"><h1>Account</h1></div>
 
-<section class="card" aria-labelledby="profile-h">
-  <h2 id="profile-h" style="margin-top:0">Your details</h2>
+<section class="panel narrow" aria-labelledby="profile-h">
+  <h2 id="profile-h">Your details</h2>
   <form method="post" action="/account/profile">
     {{ csrf(csrf_token) }}
     <p><strong>Email:</strong> {{ current_user.email }}</p>
     {{ field("name", "Name", errors, value=form.get("name"), required=true, autocomplete="name", maxlength=200) }}
-    <div class="actions"><button type="submit" class="primary">Save</button></div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Save</button></div>
   </form>
 </section>
 
-<section class="card" aria-labelledby="password-h">
-  <h2 id="password-h" style="margin-top:0">Change password</h2>
+<section class="panel narrow" aria-labelledby="password-h">
+  <h2 id="password-h">Change password</h2>
   <form method="post" action="/account/password">
     {{ csrf(csrf_token) }}
     {{ field("current_password", "Current password", errors, type="password", required=true, autocomplete="current-password") }}
     {{ field("new_password", "New password", errors, type="password", required=true, autocomplete="new-password", hint="At least 12 characters. Your other sessions are signed out.") }}
     {{ field("confirm_password", "New password again", errors, type="password", required=true, autocomplete="new-password") }}
-    <div class="actions"><button type="submit">Change password</button></div>
+    <div class="form-actions"><button type="submit" class="btn">Change password</button></div>
   </form>
 </section>
 
-<section class="card" aria-labelledby="roles-h">
-  <h2 id="roles-h" style="margin-top:0">My roles</h2>
+<section class="panel" aria-labelledby="roles-h">
+  <h2 id="roles-h">My roles</h2>
   {% if grants %}
-  <table>
-    <thead><tr><th scope="col">Entity</th><th scope="col">Roles</th><th scope="col">Extra permissions</th></tr></thead>
-    <tbody>
-    {% for g in grants %}
-      <tr><td>{{ g.entity }}</td><td>{{ g.roles|join(", ") or "—" }}</td><td class="mono">{{ g.permissions|join(", ") or "—" }}</td></tr>
-    {% endfor %}
-    </tbody>
-  </table>
+  <div class="table-wrap">
+    <table class="ledger">
+      <thead><tr><th scope="col">Entity</th><th scope="col">Roles</th><th scope="col">Extra permissions</th></tr></thead>
+      <tbody>
+      {% for g in grants %}
+        <tr><td>{{ g.entity }}</td><td>{{ g.roles|join(", ") or "—" }}</td><td class="mono">{{ g.permissions|join(", ") or "—" }}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
   {% else %}
   <p class="muted">You have no roles yet. An admin gives roles per entity.</p>
   {% endif %}
