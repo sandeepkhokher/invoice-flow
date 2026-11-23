@@ -8,7 +8,15 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 import app.accounts.models  # noqa: F401  (registers `entities`, the target of the FK below)
@@ -30,6 +38,7 @@ class Invoice(Base):
             "state IN (" + ", ".join(f"'{v}'" for v in STATE_VALUES) + ")",
             name="ck_invoices_state",
         ),
+        UniqueConstraint("stored_name", name="uq_invoices_stored_name"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -47,6 +56,13 @@ class Invoice(Base):
     tax_total: Mapped[Money | None] = mapped_column("tax_total_paise", MoneyType())
     grand_total: Mapped[Money | None] = mapped_column("grand_total_paise", MoneyType())
     status_reason: Mapped[str | None] = mapped_column(Text)
+    # Source file (S7, FR-13). `stored_name` is generated; the original name is display-only.
+    file_name: Mapped[str | None] = mapped_column(String(255))
+    stored_name: Mapped[str | None] = mapped_column(String(64))
+    file_type: Mapped[str | None] = mapped_column(String(32))
+    file_size: Mapped[int | None] = mapped_column(Integer)
+    page_count: Mapped[int | None] = mapped_column(Integer)
+    uploaded_by: Mapped[int | None] = mapped_column(Integer)  # user id; no FK (migration 0003)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_utcnow, onupdate=_utcnow

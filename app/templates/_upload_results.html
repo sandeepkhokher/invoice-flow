@@ -1,0 +1,38 @@
+{% from "_macros.html" import notice, stamp %}
+{% if error %}
+{% call notice("error", role="alert") %}<p>{{ error }}</p>{% endcall %}
+{% endif %}
+{% if results %}
+{% set accepted = results|selectattr("accepted")|list %}
+<div class="panel">
+  <h2>Results</h2>
+  <p>{{ accepted|length }} of {{ results|length }} {{ "file" if results|length == 1 else "files" }} accepted.{% if accepted %} Accepted files are read next; they appear in <a href="/invoices">Invoices</a>.{% endif %}</p>
+  <div class="table-wrap">
+    <table class="ledger">
+      <caption>One row per file, in the order uploaded</caption>
+      <thead><tr><th scope="col">File</th><th scope="col">Result</th><th scope="col">Details</th></tr></thead>
+      <tbody>
+      {% for r in results %}
+        <tr>
+          <td class="filename">{{ r.name }}</td>
+          <td>
+            {% if r.accepted %}<span class="result result-ok"><span aria-hidden="true">✓</span> Accepted</span>
+            {% else %}<span class="result result-rejected"><span aria-hidden="true">✕</span> Rejected</span>{% endif %}
+          </td>
+          <td>
+            {% if r.accepted %}
+              {{ stamp("received") }} Invoice {{ r.invoice_id }} for {{ r.entity_name }}
+              {% if r.duplicate_of %}
+              <div class="flagmark flagmark-block"><span aria-hidden="true">✕</span> Blocked: exact duplicate of invoice {{ r.duplicate_of }}</div>
+              {% endif %}
+            {% else %}
+              {{ r.reason }}
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}

@@ -318,3 +318,48 @@ S5.1 (visual design applied to the shell and S5 screens, issue #36) differs as f
   `_macros.html`. S5 screens show no money or invoice states yet.
 - **The style guide** links `../../app/static/css/invoice-flow.css` and no longer calls Google
   Fonts. Screenshots are in `doc/design/screenshots/s5.1/`.
+
+### S7 departures
+S7 (upload intake, file store, jobs worker, issue #12) differs as follows:
+- **A `flags` table arrives in S7, not S11.** FR-13 needs the exact-duplicate `block` "straight
+  away", so migration 0003 creates `flags` with the spec §5.4 columns (`app/domain/flags.py`) plus
+  `entity_id` (for entity scoping), `message` and `related_invoice_id`. `raise_flag` writes the
+  flag and a `flag.raised` audit event in one transaction. The rule ID is `DUP-EXACT-FILE` from
+  S3's library. Only same-entity duplicates are flagged here; cross-entity matches (C2) stay with
+  S11. A duplicate is still created in `received` and queued; the clerk discards or overrides it
+  in review (S11).
+- **Invoice columns for the source file:** `file_name` (display only), `stored_name` (generated,
+  unique), `file_type`, `file_size`, `page_count`, `uploaded_by`. `uploaded_by` is a user id
+  without a foreign key, because the S5 migration test pins the invoices foreign keys to the
+  entity one; `invoice.received` also records the uploader (for S12's "uploader cannot approve").
+  `transitions.create_invoice` takes an optional `data` dict, so the audit event carries the
+  file's SHA-256, type, size and page count.
+- **Auto-assignment, thin version.** A clerk of one entity gets that entity. A clerk of several
+  gets the entity whose registered GSTIN appears in the PDF's text layer (first two pages),
+  among the entities where they are a clerk; scans and ambiguous files are rejected with "Choose
+  the entity and upload it again". Assignment from the extracted buyer GSTIN is not built; S9 may
+  add it for scans.
+- **Worker.** `app/worker.py` runs `INVOICE_FLOW_WORKER_THREADS` (default 4; 0 switches it off)
+  threads from the app's lifespan, so it starts with `make run` and stops with the server.
+  Handlers register by job kind in `app.state.job_handlers`; S7 registers none, so `extract` jobs
+  stay queued and invoices stay `received` until S9 adds its handler. A handler's writes commit
+  with the job's completion or roll back with it. `attempts` is a fencing token: a worker whose
+  job was re-claimed after its 10-minute lock cannot finish it, and its writes roll back. Failed
+  jobs are retried with a back-off of 30 s times the attempt, up to 3 attempts, then `failed`.
+  Handlers must do slow work (the API call) before their first write, since SQLite has one writer.
+- **`/health`** now returns `{"status","database","worker"}`; `worker` is `running`, `degraded`,
+  `stopped` or `disabled`, and `status` is `ok` only when the database is up and the worker is
+  running or disabled. The two S1/S5 tests that pinned the old body now expect the new one, and the
+  S5 menu test now expects Invoices and Upload. Intake status (NFR-5) comes with S14.
+- **Limits and files.** Settings `max_upload_bytes` (20 MB), `max_pages` (50) and
+  `max_files_per_upload` (200, the NFR-1 burst). Files go to `INVOICE_FLOW_DATA_DIR/files/` as
+  `<32 hex>.<ext>`, written to a temporary file, fsynced and renamed, mode 0600; `FileStore`
+  refuses a root inside `app/static`. Nothing serves the files yet (S11's viewer will). Damaged
+  PDFs and images are rejected too, and a TIFF's frames count as pages.
+- **SC-3 basic list** shows the newest 200 invoices. Until extraction (S9) fills supplier, number
+  and total, the file name stands in for the supplier; the invoice date column shows a dash
+  because `invoices` has no date column yet (S9). Rows do not link anywhere until SC-4 (S11).
+- **Stylesheet additions:** `.dropzone`, `.filelist`, `.filename`, `.result` (`-ok`, `-rejected`),
+  `.flagmark` (`-block`, `-warn`) and `.ledger td.age`, also in the style guide. The drop zone works
+  without JavaScript (the file input covers it); `app/static/js/upload.js` only lists the chosen
+  files and highlights the zone. Screenshots are in `doc/design/screenshots/s7/`.

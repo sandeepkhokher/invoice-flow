@@ -13,7 +13,8 @@ Built through the AI-native SDLC: every change traces to `intent/NNNN-*/{intent,
 - Migrate: `make migrate` (Alembic upgrade head on the DB under `INVOICE_FLOW_DATA_DIR`); the app also migrates on start
 - Demo data: `make seed-demo` (2 entities, one user per role; prints the generated passwords)
 - Verify audit chain: `make verify-audit`. Healthy: `audit chain OK: N events verified`
-- Run: `make run`. Healthy: `GET http://127.0.0.1:8000/health` → `{"status":"ok","database":"ok"}`
+- Run: `make run`. Healthy: `GET http://127.0.0.1:8000/health` →
+  `{"status":"ok","database":"ok","worker":"running"}`
 - One test: `uv run pytest tests/test_health.py::test_health_reports_database_ok`
 - Ticket runner: `make runner` (one pass over issues labelled `agent:ready`)
 
@@ -36,8 +37,13 @@ For a bug fix, write the failing test first.
 - `app/main.py`: `create_app(settings)` factory; state on `app.state` (settings, engine, sessions).
 - `app/config.py`: settings from `INVOICE_FLOW_*` env vars. `app/db.py`: SQLite (WAL) engine, `Base`.
 - `app/domain/`: `money.py` (`Money`, `MoneyType`), `states.py`, `actor.py`, `models.py` (`Invoice`),
-  `transitions.py` (the only writer of invoice state). `app/audit/`: hash chain, `verify.py`.
-  `app/jobs.py`: jobs table. `app/models.py` imports every model for Alembic.
+  `transitions.py` (the only writer of invoice state), `flags.py` (`Flag`, `raise_flag`).
+  `app/audit/`: hash chain, `verify.py`. `app/models.py` imports every model for Alembic.
+- `app/jobs.py`: jobs table and queue (claim-by-update, 10-minute lock). `app/worker.py`: the
+  in-process worker, started by the app's lifespan; handlers register in `app.state.job_handlers`.
+- `app/intake/`: `files.py` (magic bytes, size and page limits), `store.py` (files under
+  `INVOICE_FLOW_DATA_DIR/files/`, generated names), `service.py` (`intake_file`: invoice, flag
+  and job in one transaction).
 - `app/accounts/`: entities, GST registrations, users, role/permission grants, sessions
   (`models.py`), Argon2id (`passwords.py`), audited admin changes (`service.py`).
 - `app/scoping.py`: `EntityScope`, the entity-scoped repository; use `user.scope` in routes.
@@ -47,7 +53,7 @@ For a bug fix, write the failing test first.
 - `app/static/`: the one stylesheet (`css/invoice-flow.css`), self-hosted fonts and HTMX, served
   at `/static` without sign-in; public assets only.
 - `app/templates/`: Jinja pages (`base.html` is the layout shell). Planned: `app/extraction/`,
-  `app/intake/`, `app/approval/`, `app/export/`.
+  `app/approval/`, `app/export/`.
 - Migrations: Alembic (`alembic/`); one migration per DB slice.
 
 ## Conventions

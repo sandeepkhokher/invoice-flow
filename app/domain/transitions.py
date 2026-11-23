@@ -166,9 +166,18 @@ def transition_to(
 
 
 def create_invoice(
-    session: Session, actor: Actor, *, entity_id: int, source: str, **fields: Any
+    session: Session,
+    actor: Actor,
+    *,
+    entity_id: int,
+    source: str,
+    data: dict[str, Any] | None = None,
+    **fields: Any,
 ) -> Invoice:
-    """Create an invoice in `received` (FR-13) and record `invoice.received`."""
+    """Create an invoice in `received` (FR-13) and record `invoice.received`.
+
+    `data` adds intake details (file hash, type, size) to the audit event.
+    """
     if not actor.is_system and not actor.has_role(entity_id, Role.CLERK):
         raise PermissionDenied("creating an invoice needs role clerk on the entity")
     invoice = Invoice(entity_id=entity_id, source=source, **fields)
@@ -180,7 +189,7 @@ def create_invoice(
         action="invoice.received",
         entity_id=entity_id,
         invoice_id=invoice.id,
-        data={"to": S.RECEIVED.value, "source": source},
+        data={**(data or {}), "to": S.RECEIVED.value, "source": source},
     )
     return invoice
 

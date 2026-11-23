@@ -1,5 +1,8 @@
 """FastAPI application factory."""
 
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
+from datetime import timedelta
 from pathlib import Path
 from urllib.parse import quote
 
@@ -8,13 +11,15 @@ from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api import admin, auth, pages
+from app.api import admin, auth, invoices, pages
 from app.api.deps import CsrfFailed, LoginRequired, guard
 from app.api.templating import render
 from app.config import Settings, get_settings
 from app.db import make_engine, make_sessionmaker, ping
+from app.intake.store import FileStore
 from app.migrate import upgrade_to_head
 from app.scoping import Forbidden, NotFound
+from app.worker import Handler, Worker
 
 # Public assets only: the stylesheet, self-hosted fonts and HTMX (visual-design.md §5).
 # This mount is the one thing served without sign-in besides /login and /health, because the
@@ -84,6 +89,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         upgrade_to_head(settings.database_url)
     engine = make_engine(settings.database_url)
 
+    sessions = make_sessionmaker(engine)
+    # Job handlers by kind. S7 registers none; S9 adds `extract`. The worker reads this live.
+    job_handlers: dict[str, Handler] = {}
+    worker = Worker(
+        sessions,
+        job_handlers,
+        threads=settings.worker_threads,
+        poll_seconds=settings.worker_poll_seconds,
+        lock=timedelta(minutes=settings.job_lock_minutes),
+        max_attempts=settings.job_max_attempts,
+    )
+
+    @asynccontextmanager
+    async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        # The worker runs in-process (spec §5.1) while the server runs.
+        worker.start()
+        try:
+            yield
+        finally:
+            worker.stop()
+
     # Every route goes through `guard`: sign-in (except PUBLIC_PATHS) and CSRF.
     # No interactive API docs: they would be unauthenticated routes.
     app = FastAPI(
@@ -92,10 +118,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         docs_url=None,
         redoc_url=None,
         openapi_url=None,
+        lifespan=lifespan,
     )
     app.state.settings = settings
     app.state.engine = engine
-    app.state.sessions = make_sessionmaker(engine)
+    app.state.sessions = sessions
+    app.state.job_handlers = job_handlers
+    app.state.worker = worker
+    # Invoice files: outside every served directory (data-protection §4); refuses otherwise.
+    app.state.file_store = FileStore(settings.files_dir, served_dirs=(STATIC_DIR,))
 
     app.add_exception_handler(LoginRequired, _login_required)
     app.add_exception_handler(NotFound, _not_found)
@@ -105,11 +136,20 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/health")
     def health() -> dict[str, str]:
+        # NFR-5: database and worker status. "ok" needs the database up and the worker
+        # running (or switched off with INVOICE_FLOW_WORKER_THREADS=0).
         db_ok = ping(engine)
-        return {"status": "ok" if db_ok else "degraded", "database": "ok" if db_ok else "down"}
+        worker_status = worker.status
+        ok = db_ok and worker_status in ("running", "disabled")
+        return {
+            "status": "ok" if ok else "degraded",
+            "database": "ok" if db_ok else "down",
+            "worker": worker_status,
+        }
 
     app.include_router(auth.router)
     app.include_router(pages.router)
     app.include_router(admin.router)
+    app.include_router(invoices.router)
     app.mount(STATIC_PATH, StaticFiles(directory=STATIC_DIR, html=False), name="static")
     return app
