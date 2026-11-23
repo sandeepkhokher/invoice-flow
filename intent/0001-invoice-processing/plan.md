@@ -219,3 +219,45 @@ S4 (synthetic invoice generator, #9) differences:
 - **Rule IDs in the manifest are provisional** (`gst.tax_head`, `gst.gstin_checksum`,
   `gst.arithmetic`, `duplicate.exact`, `duplicate.near`); S2/S3 may name them differently, and
   S10 maps them.
+
+### S5 departures
+S5 (auth, users, entities, GST registrations, grants, entity scoping, issue #10) differs as follows:
+- **Server-side sessions.** Sessions live in a `user_sessions` table. The cookie holds a random
+  token (HttpOnly, SameSite=Lax, Secure over HTTPS) and the table keeps only its SHA-256. With
+  sessions stored server-side, logout, deactivation and password changes end sessions at once, and
+  the 30-minute idle timeout is checked on the server. `INVOICE_FLOW_SECRET_KEY` is not used yet.
+- **Extra permissions have their own table.** `flags:override` and `bank_details:view` are rows in
+  `permission_grants(user, entity, permission)`, beside `role_grants(user, entity, role, tier)`
+  from spec §5.4. A permission without a role on that entity is refused, and it gives no
+  visibility. The domain `Actor` gained `permissions_by_entity` and `approver_tier_by_entity`.
+- **One place for sign-in and CSRF.** A global FastAPI dependency (`app/api/deps.py: guard`) protects
+  every route except `/login` and `/health`; a test walks the route table. CSRF uses the session's
+  token (form field or `X-CSRF-Token` header for HTMX); `/login` uses a double-submit cookie.
+  The OpenAPI/Swagger pages are switched off, since they would be routes without sign-in.
+- **Entity scoping** is `app/scoping.py: EntityScope`. Lists follow the header's entity
+  switcher, and lookups by id cover all of the user's entities. Out of scope gives `NotFound`
+  (404). A section with no matching role gives `Forbidden` (403). Admin pages list every entity
+  the admin manages, whatever the switcher says.
+- **The app migrates on start** (`INVOICE_FLOW_AUTO_MIGRATE`, default on), so `make run` and the
+  verifier work on an empty data directory. `make migrate` still exists.
+- **The migration rebuilds `invoices`** (Alembic batch) to add the FK to `entities` that S1
+  deferred. S1 tests that create invoices now use an `entity_rows` fixture; no assertion changed.
+- **Admin rules not spelled out in the spec:** any admin may create an entity and becomes its
+  admin. Entities are not deleted, because invoices and the audit trail reference them (spec §1 Q6).
+  Registrations can be removed. A GSTIN must contain the entity's PAN (characters 3-12). An admin
+  sees users with a grant on an entity they manage, plus users with no grant at all. They can
+  deactivate a user only if they administer every entity that user can reach. An entity that has
+  an admin must keep one.
+- **Inviting a user** creates a random temporary password and shows it once to the admin (no SMTP
+  in S5). It is not forced to change on first sign-in.
+- **Lockout** after 5 failed sign-ins in a row, for 15 minutes, with the same generic message.
+  Logins, failed logins, logouts and every entity, registration, grant and password change are
+  audit events.
+- **Menu items appear only once their page exists.** The role-to-menu mapping follows screens.md §2,
+  but a link shows only when its route is registered, so S6-S15 add pages without editing the
+  menu.
+- **`make seed-demo`** creates two synthetic entities (PANs start `ZX`) with registrations in three
+  states, and one user per role with that role on both entities. Each run sets random passwords
+  (or `INVOICE_FLOW_DEMO_PASSWORD`) and prints them.
+- **Not built:** there is no command to create the first admin on a production database;
+  `make seed-demo` covers development. A follow-up ticket should add one.

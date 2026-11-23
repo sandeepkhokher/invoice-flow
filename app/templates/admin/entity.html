@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf %}
+{% block title %}{{ entity.legal_name }}{% endblock %}
+{% block content %}
+<p><a href="/admin/entities">‹ Entities</a></p>
+<div class="page-head">
+  <h1>{{ entity.legal_name }}</h1>
+  <a class="button primary" href="#add-registration">Add registration</a>
+</div>
+
+<section class="card" aria-labelledby="regs-h">
+  <h2 id="regs-h" style="margin-top:0">GST registrations</h2>
+  {% if entity.registrations %}
+  <table>
+    <thead><tr><th scope="col">GSTIN</th><th scope="col">State</th><th scope="col">Address</th><th scope="col"><span class="skip">Actions</span></th></tr></thead>
+    <tbody>
+    {% for r in entity.registrations %}
+      <tr>
+        <td class="mono">{{ r.gstin|gstin }}</td>
+        <td>{{ state_name(r.state_code) }} ({{ r.state_code }})</td>
+        <td>
+          <form method="post" action="/admin/entities/{{ entity.id }}/registrations/{{ r.id }}">
+            {{ csrf(csrf_token) }}
+            {% set aerr = errors.get('address:' ~ r.id) %}
+            <label for="addr-{{ r.id }}" class="skip">Address for {{ r.gstin }}</label>
+            <textarea id="addr-{{ r.id }}" name="address" required {% if aerr %}aria-invalid="true" aria-describedby="e-addr-{{ r.id }}"{% endif %}>{{ r.address }}</textarea>
+            {% if aerr %}<p class="field-error" id="e-addr-{{ r.id }}">{{ aerr }}</p>{% endif %}
+            <button type="submit">Save address</button>
+          </form>
+        </td>
+        <td>
+          <details>
+            <summary>Remove…</summary>
+            <form method="post" action="/admin/entities/{{ entity.id }}/registrations/{{ r.id }}/remove">
+              {{ csrf(csrf_token) }}
+              <p>Invoices billed to <span class="mono">{{ r.gstin|gstin }}</span> will no longer be matched to this entity.</p>
+              <button type="submit" class="danger">Remove registration</button>
+            </form>
+          </details>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="muted">No GST registrations yet. Add one below; invoices are matched to this entity by these GSTINs.</p>
+  {% endif %}
+</section>
+
+<section class="card" id="add-registration" aria-labelledby="addreg-h">
+  <h2 id="addreg-h" style="margin-top:0">Add GST registration</h2>
+  <form method="post" action="/admin/entities/{{ entity.id }}/registrations">
+    {{ csrf(csrf_token) }}
+    {{ field("gstin", "GSTIN", errors, value=form.get("gstin"), required=true, maxlength=20, cls="mono", hint="15 characters; it must contain this entity's PAN (" ~ entity.pan ~ "). The state comes from the first two digits.") }}
+    {{ field("address", "Registered address", errors, value=form.get("address"), type="textarea", required=true) }}
+    <div class="actions"><button type="submit" class="primary">Add registration</button></div>
+  </form>
+</section>
+
+<section class="card" aria-labelledby="details-h">
+  <h2 id="details-h" style="margin-top:0">Entity details</h2>
+  <form method="post" action="/admin/entities/{{ entity.id }}">
+    {{ csrf(csrf_token) }}
+    {{ field("legal_name", "Legal name", errors, value=form.get("legal_name"), required=true, maxlength=200) }}
+    {{ field("pan", "PAN", errors, value=form.get("pan"), required=true, maxlength=10, cls="mono", hint="The PAN can change only while the entity has no GST registrations.") }}
+    <div class="actions"><button type="submit">Save details</button></div>
+  </form>
+</section>
+{% endblock %}

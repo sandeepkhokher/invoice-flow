@@ -10,7 +10,8 @@ Built through the AI-native SDLC: every change traces to `intent/NNNN-*/{intent,
 - Test: `make test`. Healthy: `N passed`, no failures or errors
 - Lint: `make lint`. Healthy: `All checks passed!` and `N files already formatted`
 - Format and fix: `make fmt`
-- Migrate: `make migrate` (Alembic upgrade head on the DB under `INVOICE_FLOW_DATA_DIR`)
+- Migrate: `make migrate` (Alembic upgrade head on the DB under `INVOICE_FLOW_DATA_DIR`); the app also migrates on start
+- Demo data: `make seed-demo` (2 entities, one user per role; prints the generated passwords)
 - Verify audit chain: `make verify-audit`. Healthy: `audit chain OK: N events verified`
 - Run: `make run`. Healthy: `GET http://127.0.0.1:8000/health` → `{"status":"ok","database":"ok"}`
 - One test: `uv run pytest tests/test_health.py::test_health_reports_database_ok`
@@ -37,8 +38,14 @@ For a bug fix, write the failing test first.
 - `app/domain/`: `money.py` (`Money`, `MoneyType`), `states.py`, `actor.py`, `models.py` (`Invoice`),
   `transitions.py` (the only writer of invoice state). `app/audit/`: hash chain, `verify.py`.
   `app/jobs.py`: jobs table. `app/models.py` imports every model for Alembic.
-- Planned: `app/tax/` (TaxRegime, IndiaGST),
-  `app/extraction/`, `app/intake/`, `app/approval/`, `app/export/`, `app/templates/`.
+- `app/accounts/`: entities, GST registrations, users, role/permission grants, sessions
+  (`models.py`), Argon2id (`passwords.py`), audited admin changes (`service.py`).
+- `app/scoping.py`: `EntityScope`, the entity-scoped repository; use `user.scope` in routes.
+- `app/api/`: routes. `deps.py` holds the global sign-in + CSRF guard (`PUBLIC_PATHS`),
+  `menu.py` the role menu, `templating.py` the renderer and `gstin`/`date` filters.
+- `app/tax/`: TaxRegime, IndiaGST, GSTIN checks.
+- `app/templates/`: Jinja pages (`base.html` is the layout shell). Planned: `app/extraction/`,
+  `app/intake/`, `app/approval/`, `app/export/`.
 - Migrations: Alembic (`alembic/`); one migration per DB slice.
 
 ## Conventions

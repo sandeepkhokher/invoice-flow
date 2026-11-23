@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% from "_macros.html" import field, csrf, grants_grid %}
+{% block title %}Admin: users{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>Users</h1>
+  <a class="button primary" href="#invite">Invite user</a>
+</div>
+
+{% if users %}
+<table>
+  <caption class="muted" style="text-align:left;padding:6px 0">People with access to entities you administer, and people with no access yet</caption>
+  <thead><tr><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Status</th></tr></thead>
+  <tbody>
+  {% for u in users %}
+    <tr>
+      <td><a href="/admin/users/{{ u.id }}">{{ u.name }}</a></td>
+      <td>{{ u.email }}</td>
+      <td>{% if u.is_active %}<span class="badge">Active</span>{% else %}<span class="badge off">✖ Deactivated</span>{% endif %}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="muted">No users yet. Invite someone below.</p>
+{% endif %}
+
+<section class="card" id="invite" aria-labelledby="invite-h" style="margin-top:18px">
+  <h2 id="invite-h" style="margin-top:0">Invite user</h2>
+  <p class="muted">invoice-flow creates a temporary password and shows it once. Give it to the person; they change it under Account.</p>
+  <form method="post" action="/admin/users">
+    {{ csrf(csrf_token) }}
+    {{ field("name", "Name", errors, value=form.get("name"), required=true, maxlength=200) }}
+    {{ field("email", "Email", errors, value=form.get("email"), type="email", required=true, maxlength=254) }}
+    <h3>Roles</h3>
+    {{ grants_grid(grid, roles, permissions, max_tier, errors) }}
+    <div class="actions"><button type="submit" class="primary">Invite user</button></div>
+  </form>
+</section>
+{% endblock %}

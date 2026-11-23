@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}My work{% endblock %}
+{% block content %}
+<div class="page-head">
+  <h1>My work</h1>
+  <span class="muted">Entity: {{ current_user.selected_entity_name or "All my entities" }}</span>
+</div>
+{% if not has_access %}
+<p class="notice">You have no access to any entity yet. Ask an admin to give you a role.</p>
+{% elif not cards %}
+<p class="muted">Your roles have no task queue. Use the menu to find what you need.</p>
+{% else %}
+<div class="cards">
+  {% for card in cards %}
+  <section class="card" aria-labelledby="card-{{ loop.index }}">
+    <h2 id="card-{{ loop.index }}">{{ card.title }}</h2>
+    <p class="muted">{{ card.empty }}</p>
+  </section>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
