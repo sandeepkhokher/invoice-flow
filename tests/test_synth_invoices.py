@@ -347,6 +347,8 @@ def test_seeded_errors_of_each_kind(dataset):
             assert not is_valid_gstin(t["supplier"]["gstin"])
             assert is_valid_gstin(e["valid_gstin"])
         elif e["kind"] == "wrong_tax_head":
+            s = t["tax_summary"]
+            assert D(s["cgst"]) + D(s["sgst"]) + D(s["utgst"]) + D(s["igst"]) > 0, t["id"]
             wrong_inter = t["supply_type"] == "inter" and t["tax_heads_printed"] != "igst"
             wrong_intra = t["supply_type"] == "intra" and t["tax_heads_printed"] == "igst"
             assert wrong_inter or wrong_intra

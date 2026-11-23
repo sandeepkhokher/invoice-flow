@@ -251,9 +251,15 @@ def build(seed: int = DEFAULT_SEED) -> tuple[list[Invoice], list[Party]]:
         base.append(inv)
 
     # Seeded errors on single-page base invoices.
+    # A wrong tax head is only detectable when some tax is charged, so those errors go on
+    # invoices with tax above zero (an all-exempt invoice prints 0.00 under every head).
     candidates = [inv for inv in base if len(inv.lines) < 10]
-    errored = rng.sample(candidates, len(ERROR_PLAN))
-    for inv, kind in zip(errored, ERROR_PLAN, strict=True):
+    taxed = [inv for inv in candidates if inv.tax_total > 0]
+    head_errors = [k for k in ERROR_PLAN if k == "wrong_tax_head"]
+    other_errors = [k for k in ERROR_PLAN if k != "wrong_tax_head"]
+    on_taxed = rng.sample(taxed, len(head_errors))
+    rest = rng.sample([inv for inv in candidates if inv not in on_taxed], len(other_errors))
+    for inv, kind in zip(on_taxed + rest, head_errors + other_errors, strict=True):
         _seed_error(inv, kind, rng)
 
     # Duplicates of clean, single-page originals (one duplicate per original).
