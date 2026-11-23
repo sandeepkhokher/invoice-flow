@@ -99,6 +99,10 @@ criteria copied from the spec, applicable skills, and "Done = PR with `make test
 output". Concern decisions are carried into the matching issues (C2→S11, C3→S8, C4→S12,
 C5→S2, C6→S10, C7→S14, C8→S9).
 
+**Screens (added 2026-11-23).** `screens.md` lists every screen (SC-1 to SC-50), who sees it, its
+layout, and which slice builds it (screens.md §5). UI slices S5–S15 build to it. GST rate-table
+editing (SC-45) moves to S6, as S2 proposed.
+
 ## Risks (interrogated)
 - **Riskiest step: S9/S10, extraction accuracy.** Synthetic invoices may be too easy (C1).
   Mitigation: build the generator (S4) in wave 1 with realistic variety; run the eval before

@@ -24,6 +24,8 @@ For a bug fix, write the failing test first.
 ## Where the requirements are
 - `intent/0001-invoice-processing/spec.md`: requirements (FR-n, NFR-n) and design; cite FR IDs in PRs.
 - `intent/0001-invoice-processing/plan.md`: slices S1–S15, dependencies, risks.
+- `intent/0001-invoice-processing/screens.md`: screen map (SC-n), roles per screen, layouts.
+  Any ticket that adds a page builds the screens its slice lists there; cite SC IDs in PRs.
 - If your implementation departs from plan.md, update plan.md in the same PR.
 
 ## Architecture
