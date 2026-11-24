@@ -20,6 +20,7 @@ from app.api.templating import render
 from app.domain.actor import Role
 from app.domain.flags import Flag, FlagSeverity, FlagStatus
 from app.domain.models import Invoice
+from app.domain.states import InvoiceState
 from app.intake.service import FileResult, Limits, intake_file
 from app.scoping import NotFound
 
@@ -185,5 +186,8 @@ def invoice_list(request: Request, user: SignedIn, db: Db) -> Response:
             "more": more,
             "limit": LIST_LIMIT,
             "can_upload": bool(scope.listing_entity_ids(Role.CLERK)),
+            "in_progress": any(
+                r.invoice.state in (InvoiceState.RECEIVED, InvoiceState.EXTRACTING) for r in rows
+            ),
         },
     )

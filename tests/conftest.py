@@ -30,9 +30,18 @@ def fast_password_hashing(monkeypatch):
     )
 
 
+@pytest.fixture(autouse=True)
+def no_claude_api_key(monkeypatch):
+    """`make test` never calls the Claude API (CLAUDE.md): tests run without a key."""
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
+
 @pytest.fixture
 def settings(tmp_path) -> Settings:
-    return Settings(data_dir=tmp_path)
+    # No eval-set manifest unless a test writes one: the demo extractor knows no files.
+    return Settings(
+        data_dir=tmp_path, anthropic_api_key=None, demo_manifest=tmp_path / "no-manifest.json"
+    )
 
 
 @pytest.fixture
