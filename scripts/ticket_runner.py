@@ -59,6 +59,15 @@ class Result:
     summary: str
     cost_usd: float | None = None
     gate_output: str = ""
+    retry_later: bool = False  # e.g. usage limit hit: requeue, don't block
+
+
+USAGE_LIMIT = re.compile(r"(usage|rate|session|\d+-hour) limit|hit your .*limit", re.IGNORECASE)
+
+
+def is_usage_limit(text: str) -> bool:
+    """True when Claude stopped because of an account limit, not because of the ticket."""
+    return bool(USAGE_LIMIT.search(text or ""))
 
 
 def slugify(text: str, max_len: int = 40) -> str:
@@ -175,7 +184,8 @@ def build(issue: Issue, path: Path, template: str) -> Result:
         return Result(False, f"Claude session timed out after {CLAUDE_TIMEOUT_S // 60} minutes.")
     ok, summary, cost = parse_claude_output(proc.stdout)
     if not ok:
-        return Result(False, summary or tail(proc.stderr), cost)
+        reason = summary or tail(proc.stderr)
+        return Result(False, reason, cost, retry_later=is_usage_limit(reason))
     commits = run(["git", "rev-list", "--count", "origin/main..HEAD"], cwd=path).stdout.strip()
     if commits in ("", "0"):
         return Result(False, f"Session finished without committing anything.\n\n{summary}", cost)
@@ -220,6 +230,16 @@ def process(issue: Issue, path: Path, template: str) -> None:
         comment(issue.number, f"Runner opened {url}")
         run(["git", "worktree", "remove", "--force", str(path)])
         print(f"#{issue.number}: PR {url}")
+    elif result.retry_later:
+        set_labels(issue.number, READY, WORKING)
+        comment(
+            issue.number,
+            "Runner stopped on an account limit, not the ticket; re-queued.\n\n"
+            + result.summary[-500:],
+        )
+        run(["git", "worktree", "remove", "--force", str(path)])
+        run(["git", "branch", "-D", issue.branch])
+        print(f"#{issue.number}: re-queued (usage limit)")
     else:
         set_labels(issue.number, BLOCKED, WORKING)
         comment(
